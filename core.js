@@ -148,7 +148,7 @@ window.TO = (function () {
       interaction: { mode: 'nearest', intersect: false, axis: 'xy' },
       hover:       { mode: 'nearest', intersect: false, axis: 'xy' },
       plugins: {
-        legend: { labels: { color: '#e0e0e0' } },
+        legend: { labels: { color: '#e8e7e3' } },
         tooltip: {
           callbacks: {
             label: ctx => `${ctx.dataset.label}: ${fmt(ctx.parsed.y)} XP/h`
@@ -160,8 +160,8 @@ window.TO = (function () {
 
   function axisOpts(extra) {
     return Object.assign({
-      ticks: { color: '#999' },
-      grid: { color: 'rgba(255,255,255,0.05)' }
+      ticks: { color: '#9a9890' },
+      grid: { color: 'rgba(255,255,255,0.06)' }
     }, extra || {});
   }
 

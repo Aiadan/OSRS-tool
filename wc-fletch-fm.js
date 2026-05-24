@@ -534,7 +534,7 @@
           // Legend click toggles BOTH datasets of the pair via tree.id.
           legend: {
             labels: {
-              color: '#e0e0e0',
+              color: '#e8e7e3',
               filter: (item) => {
                 if (/ \(max\)$/.test(item.text)) return false;
                 if (sortKey === 'fletchingXpPerHour') {
@@ -559,8 +559,8 @@
           }
         },
         scales: {
-          x: TO.axisOpts({ title: { display: true, text: 'Woodcutting level', color: '#999' } }),
-          y: TO.axisOpts({ beginAtZero: true, title: { display: true, text: 'Firemaking XP / h', color: '#999' } })
+          x: TO.axisOpts({ title: { display: true, text: 'Woodcutting level', color: '#9a9890' } }),
+          y: TO.axisOpts({ beginAtZero: true, title: { display: true, text: 'Firemaking XP / h', color: '#9a9890' } })
         }
       })
     });

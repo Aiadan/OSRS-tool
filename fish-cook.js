@@ -646,7 +646,7 @@
         plugins: {
           legend: {
             labels: {
-              color: '#e0e0e0',
+              color: '#e8e7e3',
               filter: (item) => !/ \(max\)$/.test(item.text)
             },
             onClick: (e, item) => {
@@ -664,8 +664,8 @@
           }
         },
         scales: {
-          x: TO.axisOpts({ title: { display: true, text: 'Fishing level', color: '#999' } }),
-          y: TO.axisOpts({ beginAtZero: true, title: { display: true, text: 'Cooking XP / h', color: '#999' } })
+          x: TO.axisOpts({ title: { display: true, text: 'Fishing level', color: '#9a9890' } }),
+          y: TO.axisOpts({ beginAtZero: true, title: { display: true, text: 'Cooking XP / h', color: '#9a9890' } })
         }
       })
     });
