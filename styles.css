@@ -624,6 +624,17 @@ code {
 
 /* ---- Startpage section picker -------------------------------------- */
 
+.intro {
+  max-width: 62ch;
+  margin: 0 0 1rem 0;
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  line-height: 1.65;
+  /* a gold hairline keys it to the theme without shouting */
+  border-left: 2px solid var(--accent-dim);
+  padding-left: 0.85rem;
+}
+
 .lede {
   font-size: 1rem;
   color: var(--text);
