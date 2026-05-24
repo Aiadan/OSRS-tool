@@ -266,11 +266,54 @@ td .ot-dim { color: var(--text-dim); }
 }
 
 .table-wrap {
-  /* No overflow on desktop — setting overflow-x: auto would implicitly
+  /* No overflow by default — setting overflow-x: auto would implicitly
      promote overflow-y to auto and turn this into a scroll container,
-     which traps the sticky thead inside the wrap. Mobile breakpoint
-     re-enables horizontal scroll where the table can't fit. */
+     which traps the sticky thead inside the wrap. `is-scrolling` (toggled by
+     wireStickyTheadRelease when the table overflows its column) and the
+     narrow-width breakpoint re-enable horizontal scroll where the table can't
+     fit; in both cases the thead is switched to static so nothing is trapped. */
 }
+.table-wrap.is-scrolling {
+  overflow-x: auto;
+  /* The visible bar is the floating .hscroll proxy (which stays in view); hide
+     this native one to avoid a redundant second scrollbar at the table bottom.
+     The wrap still scrolls via wheel/touch and stays synced to the proxy. */
+  scrollbar-width: none;
+}
+.table-wrap.is-scrolling::-webkit-scrollbar { height: 0; }
+.table-wrap.is-scrolling thead {
+  position: static;
+}
+
+/* Floating horizontal scrollbar: a slim strip pinned to the viewport bottom
+   that mirrors an overflowing table's horizontal scroll, so you can scroll
+   sideways while the table is on screen instead of first scrolling to its
+   bottom. Created and kept in sync by wireStickyTheadRelease in core.js;
+   `overflow-x: scroll` keeps the track a consistent height across browsers. */
+.hscroll {
+  position: sticky;
+  bottom: 0;
+  z-index: 15;
+  height: 14px;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  background: var(--bg-card);
+  /* Force an always-visible themed bar regardless of OS scrollbar mode.
+     Windows 11 Chrome defaults to auto-hiding overlay (Fluent) scrollbars,
+     which take no layout space and vanish at rest — a bare native proxy would
+     be invisible. Defining ::-webkit-scrollbar opts this element back into a
+     classic, persistent, styled scrollbar. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-dim) transparent;
+}
+.hscroll > div { height: 1px; }
+.hscroll::-webkit-scrollbar { height: 12px; }
+.hscroll::-webkit-scrollbar-track { background: transparent; }
+.hscroll::-webkit-scrollbar-thumb {
+  background: var(--accent-dim);
+  border-radius: 6px;
+}
+.hscroll::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
 table {
   width: 100%;
@@ -292,7 +335,9 @@ thead {
      `wireStickyTheadRelease` in core.js, which toggles `thead-released`
      once the tbody's bottom has scrolled past the sticky position. */
   position: sticky;
-  top: 15.5rem;
+  /* Offset published by updateStickyOffsets() in core.js (measured stack
+     height); the rem fallback is the old fixed value for the no-JS case. */
+  top: var(--sticky-thead-top, 15.5rem);
   z-index: 10;
 }
 
@@ -448,7 +493,7 @@ code {
 
 .view-title {
   position: sticky;
-  top: 5.5rem;
+  top: var(--sticky-title-top, 5.5rem);
   z-index: 30;
   background: var(--bg);
   padding: 0.75rem 0 0.5rem 0;
@@ -458,7 +503,7 @@ code {
 
 .view-flex .inputs.card {
   position: sticky;
-  top: 9rem;
+  top: var(--sticky-inputs-top, 9rem);
   z-index: 20;
   margin-bottom: 1rem;
 }
@@ -590,7 +635,7 @@ input[type="checkbox"] {
   position: sticky;
   /* Sit just below the sticky inputs card so the rail's "Tracking" header
      stays roughly aligned with the input labels as the user scrolls. */
-  top: 9rem;
+  top: var(--sticky-inputs-top, 9rem);
   flex: 0 0 auto;
   align-self: flex-start;
   display: flex;
@@ -648,6 +693,28 @@ input[type="checkbox"] {
   thead th { padding: 0.5rem 0.45rem; font-size: 0.68rem; }
   tbody td { padding: 0.45rem 0.45rem; }
   table { font-size: 0.85rem; }
+  /* The Tracking rail's ~150px column leaves a near-empty left gutter and
+     starves the already-wide table once space is tight. Hide it here and rely
+     on the clickable column headers, which sort by the same XP/h metrics. */
+  .mode-rail { display: none; }
+}
+
+/* Safeguard: below this width the input grid wraps to several rows, so the
+   stacked sticky bars get tall enough to eat most of a short viewport — and if
+   JS hasn't published the measured offsets yet, the rem fallbacks no longer
+   line up. Drop the lower bars to static (the toolbar stays pinned at top:0,
+   which never depends on the stack height). The dynamic offsets above keep the
+   full sticky stack correct at all wider widths. */
+@media (max-width: 768px) {
+  .view-title,
+  .view-flex .inputs.card,
+  .mode-rail,
+  thead { position: static; }
+  /* No-JS fallback: with the sticky stack static here, the wrap can safely be a
+     horizontal scroll container so a too-wide table scrolls inside its card
+     instead of spilling past it. When JS runs, `is-scrolling` already does this
+     at any width. */
+  .table-wrap { overflow-x: auto; }
 }
 
 @media (max-width: 600px) {
@@ -658,17 +725,10 @@ input[type="checkbox"] {
   .top-toolbar { flex-direction: column; align-items: stretch; }
   .top-toolbar-right { justify-content: flex-start; }
   input[type="text"] { min-width: 0; flex: 1; }
-  /* Rail too wide for phones — fall back to the table-header sorting. */
-  .mode-rail { display: none; }
   /* On phones the toolbar becomes column-stacked and its height is
      unpredictable; the sticky stack would shove half the chart offscreen,
-     so drop back to normal flow. */
+     so drop the toolbar too (the rest of the stack is already static at the
+     768px breakpoint above, and the rail is hidden from 1100px). */
   .top-toolbar { position: static; margin-top: 0; padding-top: 0; margin-bottom: 1.25rem; }
-  .view-title { position: static; border-bottom: none; padding: 0; margin: 0 0 1.25rem 0 !important; }
-  .view-flex .inputs.card { position: static; }
-  thead { position: static; }
-  /* On phones the table is allowed to overflow horizontally inside its
-     wrap — the sticky thead is already disabled above, so the wrap can
-     safely become a scroll container without trapping it. */
-  .table-wrap { overflow-x: auto; }
+  .view-title { border-bottom: none; padding: 0; margin: 0 0 1.25rem 0 !important; }
 }

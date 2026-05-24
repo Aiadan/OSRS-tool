@@ -322,6 +322,28 @@ window.TO = (function () {
     } catch (e) {}
   }
 
+  // ---- Sticky stack offsets --------------------------------------------
+  // The toolbar, view-title, inputs card and table thead are four stacked
+  // sticky bars. Each one's `top` must equal the combined height of the bars
+  // above it — but those heights change with viewport width (the input grid
+  // wraps to extra rows on narrower windows) and with content (RSN status
+  // text, web-font swap). Hard-coding the offsets in rem (the old approach)
+  // only lined up at one specific width; anywhere the toolbar/inputs wrapped,
+  // the thead floated out of place. Instead we measure the *visible* section's
+  // stack live and publish the offsets as CSS custom properties; the
+  // stylesheet consumes them with the old fixed rems kept as no-JS fallbacks.
+  function updateStickyOffsets() {
+    const h = (el) => el ? el.getBoundingClientRect().height : 0;
+    const toolbarH = h(document.querySelector('.top-toolbar'));
+    const section  = document.querySelector('.view:not(.hidden)');
+    const titleH   = section ? h(section.querySelector('.view-title')) : 0;
+    const inputsH  = section ? h(section.querySelector('.view-flex .inputs.card')) : 0;
+    const root = document.documentElement.style;
+    root.setProperty('--sticky-title-top',  Math.round(toolbarH) + 'px');
+    root.setProperty('--sticky-inputs-top', Math.round(toolbarH + titleH) + 'px');
+    root.setProperty('--sticky-thead-top',  Math.round(toolbarH + titleH + inputsH) + 'px');
+  }
+
   // ---- Sticky thead release --------------------------------------------
   // CSS `position: sticky` on a table's `thead` should release once the
   // table's bottom edge passes the sticky top, but browsers don't agree
@@ -331,18 +353,28 @@ window.TO = (function () {
   // on each visible table when its tbody bottom rises above the would-be
   // sticky bottom edge; CSS then switches that thead back to `static`.
   function wireStickyTheadRelease() {
-    // Cache each table's configured sticky-top so we don't have to clear
-    // inline styles to re-measure it on every scroll event.
-    const stickyTopCache = new WeakMap();
+    // Cache each table's measured sticky-top so we don't clear inline styles
+    // to re-measure on every scroll. Dropped wholesale by refresh() whenever
+    // the offsets change. `null` cached value = thead isn't sticky right now
+    // (mobile / narrow-width safeguard), so there's nothing to release.
+    let stickyTopCache = new WeakMap();
     const measureStickyTop = (thead) => {
       const prevPos = thead.style.position;
       const prevTop = thead.style.top;
       thead.style.position = '';
       thead.style.top = '';
-      const px = parseFloat(getComputedStyle(thead).top) || 0;
+      const cs = getComputedStyle(thead);
+      const px = cs.position === 'sticky' ? (parseFloat(cs.top) || 0) : null;
       thead.style.position = prevPos;
       thead.style.top = prevTop;
       return px;
+    };
+    const clearRelease = (table, thead) => {
+      if (table.classList.contains('thead-released')) {
+        thead.style.position = '';
+        thead.style.top = '';
+        table.classList.remove('thead-released');
+      }
     };
     const sync = () => {
       document.querySelectorAll('table').forEach((table) => {
@@ -355,6 +387,9 @@ window.TO = (function () {
           stickyTopPx = measureStickyTop(thead);
           stickyTopCache.set(table, stickyTopPx);
         }
+        // thead isn't sticky (mobile/safeguard breakpoint) — it scrolls with
+        // the table, so undo any stale release state and leave it alone.
+        if (stickyTopPx === null) { clearRelease(table, thead); return; }
         const lastRowTop = lastRow.getBoundingClientRect().top;
         // Release the moment the thead's bottom edge would otherwise start
         // covering the last row. After release we pin the thead at that
@@ -371,16 +406,79 @@ window.TO = (function () {
             table.classList.add('thead-released');
           }
         } else if (wasReleased) {
-          thead.style.position = '';
-          thead.style.top = '';
-          table.classList.remove('thead-released');
+          clearRelease(table, thead);
         }
       });
     };
+    // The wide multi-column tables can't fit on narrower viewports. Rather
+    // than let them spill past the card (and force a page-wide horizontal
+    // scrollbar), turn the wrap into its own horizontal scroll container when
+    // its table overflows. A scroll container can't host a viewport-sticky
+    // thead (the browser would anchor the sticky thead to the wrap), so CSS
+    // drops that table's thead to `static` while `is-scrolling` is set — the
+    // release logic then sees a non-sticky thead and leaves it alone.
+    // A wrap's own scrollbar sits at the bottom of the (possibly tall) table,
+    // so you'd have to scroll the whole table down to reach it. Instead give
+    // each scrolling wrap a slim proxy scrollbar pinned to the viewport bottom
+    // (CSS `.hscroll`) whose scroll position is mirrored to/from the wrap, so
+    // sideways scrolling is reachable whenever the table is on screen. The
+    // wrap's native bar is hidden in CSS to avoid a redundant second one.
+    const ensureHScroll = (wrap) => {
+      if (wrap._hscroll) return wrap._hscroll;
+      const proxy = document.createElement('div');
+      proxy.className = 'hscroll';
+      proxy.setAttribute('aria-hidden', 'true');
+      proxy.appendChild(document.createElement('div'));   // width spacer
+      wrap.insertAdjacentElement('afterend', proxy);
+      let lock = false;
+      const link = (from, to) => from.addEventListener('scroll', () => {
+        if (lock) return;
+        lock = true;
+        to.scrollLeft = from.scrollLeft;
+        requestAnimationFrame(() => { lock = false; });
+      }, { passive: true });
+      link(proxy, wrap);
+      link(wrap, proxy);
+      wrap._hscroll = proxy;
+      return proxy;
+    };
+    const syncTableScroll = () => {
+      document.querySelectorAll('.table-wrap').forEach((wrap) => {
+        const table = wrap.querySelector('table');
+        if (!table) return;
+        // A hidden overflow-x scrollbar never changes clientWidth, so the
+        // comparison is stable and won't oscillate.
+        const overflowing = table.scrollWidth > wrap.clientWidth + 1;
+        wrap.classList.toggle('is-scrolling', overflowing);
+        const proxy = ensureHScroll(wrap);
+        proxy.hidden = !overflowing;
+        if (overflowing) {
+          proxy.firstChild.style.width = table.scrollWidth + 'px';
+          proxy.scrollLeft = wrap.scrollLeft;   // keep aligned after a resize
+        }
+      });
+    };
+    // Recompute offsets, set each table's scroll mode (which fixes thead
+    // sticky/static), drop the now-stale per-table cache, then re-evaluate the
+    // release state.
+    const refresh = () => {
+      updateStickyOffsets();
+      syncTableScroll();
+      stickyTopCache = new WeakMap();
+      sync();
+    };
     window.addEventListener('scroll', sync, { passive: true });
-    window.addEventListener('resize', sync);
-    // Run once after layout settles so the initial state is correct.
-    requestAnimationFrame(sync);
+    window.addEventListener('resize', refresh);
+    // Any size change in the sticky stack or the tables — toolbar wrap, RSN
+    // status text, input-grid reflow, font swap, a section switch, or a table
+    // re-render changing its width — must recompute offsets and scroll mode.
+    if (typeof ResizeObserver === 'function') {
+      const ro = new ResizeObserver(() => refresh());
+      document.querySelectorAll('.top-toolbar, .view-title, .view-flex .inputs.card, .table-wrap, table')
+        .forEach((el) => ro.observe(el));
+    }
+    refresh();                       // initial offsets + state
+    requestAnimationFrame(refresh);  // again once layout/fonts settle
     // Also expose so section renders can call it after tbody rebuilds.
     TO.syncStickyThead = sync;
   }
