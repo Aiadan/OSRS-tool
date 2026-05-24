@@ -25,7 +25,7 @@ const BIG_NET_EXTRA_CATCHES = [
 
 window.TRAINING_DATA = {
   meta: {
-    version: "1.0.4",
+    version: "1.0.5",
     constantsSource: "WC->Fletching: community-derived. Fish->Cooking: scraped from OSRS wiki {{Skilling success chart}} templates.",
     lastVerified: "2026-05-24",
     calibrationStatus: "uncalibrated",

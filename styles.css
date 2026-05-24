@@ -630,6 +630,8 @@ code {
   color: var(--text-dim);
   font-size: 0.95rem;
   line-height: 1.65;
+  /* even out the wrap so there's no short orphaned last line */
+  text-wrap: balance;
   /* a gold hairline keys it to the theme without shouting */
   border-left: 2px solid var(--accent-dim);
   padding-left: 0.85rem;
