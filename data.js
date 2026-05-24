@@ -25,7 +25,7 @@ const BIG_NET_EXTRA_CATCHES = [
 
 window.TRAINING_DATA = {
   meta: {
-    version: "1.0.5",
+    version: "1.1.0",
     constantsSource: "WC->Fletching: community-derived. Fish->Cooking: scraped from OSRS wiki {{Skilling success chart}} templates.",
     lastVerified: "2026-05-24",
     calibrationStatus: "uncalibrated",
@@ -207,6 +207,38 @@ window.TRAINING_DATA = {
         ],
 
         gauntlets: { affectedField: 'gauntletsAffected' }
+      }
+    },
+
+    // ----------------------------------------------------------------------
+    'thieving': {
+      label: 'Thieving',
+      blurb: 'Best pickpocket target or stall for Thieving XP/h.',
+      skillLabel: 'Thieving',
+      hiscoresIndex: 18,
+
+      // Pickpocket success boosts. They stack multiplicatively onto the base
+      // success curve's low/high (verified against the wiki's pre-computed
+      // gear series). Pickpocketing only — stalls are unaffected.
+      gear: [
+        { id: 'gloves', label: 'Gloves of silence',   mult: 1.05 },
+        { id: 'cape',   label: 'Thieving cape',        mult: 1.10 },
+        { id: 'ardue',  label: 'Ardougne Hard diary',  mult: 1.10 }
+      ],
+
+      pickpocket: {
+        // An attempt every 2 ticks (1.2s); a failure stuns you out of
+        // pickpocketing for 8 ticks (4.8s). Success curve per target uses the
+        // same {{Skilling success chart}} interpolation as the fishing data.
+        attemptSec: 1.2,
+        stunSec: 4.8,
+        targets: (window.TRAINING_DATA_THIEVING && window.TRAINING_DATA_THIEVING.pickpocket) || []
+      },
+
+      stalls: {
+        // Success is 100% once the level requirement is met; XP/h is gated by
+        // each stall's respawn time (xp / respawn).
+        entries: (window.TRAINING_DATA_THIEVING && window.TRAINING_DATA_THIEVING.stalls) || []
       }
     }
   }

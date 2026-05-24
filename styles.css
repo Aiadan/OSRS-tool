@@ -768,6 +768,18 @@ input[type="checkbox"] {
   font-weight: 600;
 }
 
+/* ---- Thieving activity toggle (Pickpocketing / Stalls) ------------- */
+.th-activity {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.th-activity .mode-rail-btn {
+  font-size: 0.9rem;
+  padding: 0.5rem 1.1rem;
+}
+
 /* The rail is now in normal flow (sticky inside .view-flex), so no body
    padding shenanigans are needed — the layout naturally reserves space
    for it. */
