@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OSRS Training Optimizer</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+
+    <header class="top-toolbar">
+      <div class="top-toolbar-left">
+        <a class="home-link" href="#/" id="home-link">← All training tools</a>
+        <h1 id="page-title">OSRS Training Optimizer</h1>
+        <span id="app-version" class="app-version"></span>
+      </div>
+      <div class="top-toolbar-right">
+        <label class="inline">
+          <span>RSN</span>
+          <input type="text" id="rsn-input" placeholder="your in-game name" autocomplete="off" spellcheck="false" />
+        </label>
+        <button type="button" id="rsn-btn" class="btn">Lookup hiscores</button>
+        <span id="rsn-status" class="status" role="status"></span>
+      </div>
+    </header>
+
+    <!-- ====================  Startpage  ==================== -->
+    <section class="view" data-view="home">
+      <p class="lede">Pick a training scenario to optimise.</p>
+      <div class="section-picker-grid">
+        <a class="section-card" href="#/wc-fletch-fm">
+          <h2>Woodcutting + Fletching + Firemaking</h2>
+          <p>Best tree for WC, Fletching, or Firemaking XP/h — hardwoods included.</p>
+        </a>
+        <a class="section-card" href="#/fish-cook">
+          <h2>Fishing + Cooking</h2>
+          <p>Best fishing spot for combined fishing & cooking XP/h.</p>
+        </a>
+      </div>
+      <p class="hint">Last-used section is remembered, so re-opening this page jumps you straight back in.</p>
+    </section>
+
+    <!-- ====================  Woodcutting + Fletching + Firemaking  ==================== -->
+    <section class="view hidden" data-view="wc-fletch-fm">
+      <h2 class="view-title">Woodcutting + Fletching + Firemaking</h2>
+      <div class="view-flex">
+      <aside class="mode-rail">
+        <div class="mode-rail-label">Tracking</div>
+        <button type="button" class="mode-rail-btn" data-mode="wcXpPerHour">WC XP/h</button>
+        <button type="button" class="mode-rail-btn" data-mode="fletchingXpPerHour">Fletching XP/h</button>
+        <button type="button" class="mode-rail-btn" data-mode="firemakingXpPerHour">Firemaking XP/h</button>
+      </aside>
+      <div class="view-body">
+
+      <section class="inputs card">
+        <div class="input-row">
+          <label>
+            <span>Woodcutting</span>
+            <input type="number" id="wc-level" min="1" max="99" step="1" value="60" />
+          </label>
+          <label>
+            <span>Fletching</span>
+            <input type="number" id="fletch-level" min="1" max="99" step="1" value="65" />
+          </label>
+          <label>
+            <span>Firemaking</span>
+            <input type="number" id="fm-level" min="1" max="99" step="1" value="60" />
+          </label>
+          <label>
+            <span>Axe</span>
+            <select id="axe-select"></select>
+          </label>
+          <label>
+            <span>Efficiency</span>
+            <input type="number" id="efficiency" min="0.5" max="1" step="0.05" value="0.95" />
+          </label>
+        </div>
+      </section>
+
+      <section class="banner">
+        <strong>Calibration notice:</strong> tree chop chance and axe power are community-derived starting points (no authoritative wiki values exist). Firemaking XP values and the linear 65→256 ignition ramp to level 43 are wiki-verified. Relative ranking between trees is reliable; absolute XP/h is approximate, especially for hardwoods.
+      </section>
+
+      <section class="card rec-pair">
+        <div class="rec-cell">
+          <span class="rec-label">Best for WC XP/h</span>
+          <span class="rec-tree" id="rec-wc-tree">—</span>
+          <span class="rec-xp" id="rec-wc-xp">—</span>
+          <span class="rec-detail" id="rec-wc-detail">Pure chop — drop the logs and keep chopping.</span>
+          <span class="rec-overtake" id="rec-wc-overtake"></span>
+        </div>
+        <div class="rec-cell">
+          <span class="rec-label">Best for Fletching XP/h</span>
+          <span class="rec-tree" id="rec-fletch-tree">—</span>
+          <span class="rec-xp" id="rec-fletch-xp">—</span>
+          <span class="rec-detail" id="rec-fletch-detail">Chop and fletch into unstrung bows.</span>
+          <span class="rec-overtake" id="rec-fletch-overtake"></span>
+        </div>
+        <div class="rec-cell">
+          <span class="rec-label">Best for Firemaking XP/h</span>
+          <span class="rec-tree" id="rec-fm-tree">—</span>
+          <span class="rec-xp" id="rec-fm-xp">—</span>
+          <span class="rec-detail" id="rec-fm-detail">Chop and burn (every tree is burnable).</span>
+          <span class="rec-overtake" id="rec-fm-overtake"></span>
+        </div>
+        <p class="hint rec-overtake-hint">Overtake projections use your raw XP from the latest <strong>Lookup hiscores</strong> call. If you haven't looked yourself up — or you've edited a level manually since — the projection falls back to the minimum XP for the displayed level, so the "actions remaining" is an upper bound. Click rows to exclude trees from consideration.</p>
+      </section>
+
+      <section class="card">
+        <h3>Per-tree breakdown</h3>
+        <div class="table-wrap">
+          <table id="results-table">
+            <thead>
+              <tr>
+                <th data-key="name">Tree</th>
+                <th data-key="wcLevel" data-numeric>WC req</th>
+                <th data-key="fletchLevel" data-numeric>Fletch req</th>
+                <th data-key="fmLevel" data-numeric>FM req</th>
+                <th data-key="chopTimePerLog" data-numeric>Chop / log</th>
+                <th data-key="wcXpPerHour" data-numeric>WC XP / h</th>
+                <th data-key="fletchingXpPerHour" data-numeric>Fletch XP / h</th>
+                <th data-key="firemakingXpPerHour" data-numeric>FM XP / h</th>
+              </tr>
+            </thead>
+            <tbody id="results-tbody"></tbody>
+          </table>
+        </div>
+        <p class="hint">Click a column header to sort. WC XP/h assumes pure chop (drop logs). Fletch XP/h and FM XP/h assume chop+process cycle. Trees you can't chop yet are dimmed; non-fletchable trees show "—" in the Fletch columns.</p>
+      </section>
+
+      <section class="card">
+        <h3 id="wc-bar-title">Firemaking XP/h per tree — current setup</h3>
+        <div class="chart-wrap"><canvas id="bar-chart"></canvas></div>
+      </section>
+
+      <section class="card">
+        <h3 id="wc-line-title">Firemaking XP/h vs Woodcutting level</h3>
+        <div class="chart-wrap">
+          <canvas id="line-chart"></canvas>
+        </div>
+        <p class="hint" id="wc-line-hint">Charts follow the active sort column (click a WC/Fletch/FM XP/h header to switch). In WC and Firemaking modes each tree draws two curves: <strong>solid</strong> = rate at your current Fletching + Firemaking levels; <strong>dashed</strong> = same tree assuming the other skill is trained alongside Woodcutting. In Fletching mode each fletchable tree draws two curves of the same colour, one for shortbow and one for longbow: <strong>solid</strong> = the bow tier your current Fletching level qualifies for; <strong>dashed</strong> = the other tier (an upgrade target if you're still on shortbow, or the surpassed tier if you're already on longbow). The gap between them is the XP-per-hour boost from switching tiers.</p>
+      </section>
+
+      <footer>
+        <p>
+          Data sources: <a href="https://oldschool.runescape.wiki/w/Woodcutting" target="_blank" rel="noopener">Woodcutting (wiki)</a> ·
+          <a href="https://oldschool.runescape.wiki/w/Fletching" target="_blank" rel="noopener">Fletching (wiki)</a> ·
+          <a href="https://oldschool.runescape.wiki/w/Firemaking" target="_blank" rel="noopener">Firemaking (wiki)</a>.
+          Edit <code>data.js</code> to calibrate hardwood chop rates.
+        </p>
+      </footer>
+      </div><!-- /.view-body -->
+      </div><!-- /.view-flex -->
+    </section>
+
+    <!-- ====================  Fishing + Cooking  ==================== -->
+    <section class="view hidden" data-view="fish-cook">
+      <h2 class="view-title">Fishing + Cooking</h2>
+      <div class="view-flex">
+      <aside class="mode-rail">
+        <div class="mode-rail-label">Tracking</div>
+        <button type="button" class="mode-rail-btn" data-mode="fishingXpPerHour">Fishing XP/h</button>
+        <button type="button" class="mode-rail-btn" data-mode="cookingXpPerHour">Cooking XP/h</button>
+        <button type="button" class="mode-rail-btn" data-mode="totalXpPerHour">Total XP/h</button>
+      </aside>
+      <div class="view-body">
+
+      <section class="inputs card">
+        <div class="input-row">
+          <label>
+            <span>Fishing</span>
+            <input type="number" id="fc-fish-level" min="1" max="99" step="1" value="50" />
+          </label>
+          <label>
+            <span>Cooking</span>
+            <input type="number" id="fc-cook-level" min="1" max="99" step="1" value="50" />
+          </label>
+          <label>
+            <span>Harpoon tier</span>
+            <select id="fc-harpoon-select"></select>
+          </label>
+          <label>
+            <span>Cooking on</span>
+            <select id="fc-method-select"></select>
+          </label>
+          <label class="checkbox-cell">
+            <input type="checkbox" id="fc-gauntlets" />
+            <span>Cooking gauntlets</span>
+          </label>
+          <label>
+            <span>Efficiency</span>
+            <input type="number" id="fc-efficiency" min="0.5" max="1" step="0.05" value="0.95" />
+          </label>
+        </div>
+      </section>
+
+      <section class="banner">
+        <strong>Data note:</strong> per-fish catch and burn rates are scraped from the OSRS wiki's <code>{{Skilling success chart}}</code> templates and use the wiki's official formula. Per-spot aggregate uses the OSRS cascade mechanic (higher-tier fish in a spot are rolled first). The harpoon-tier dropdown only affects harpoon-family spots.
+      </section>
+
+      <section class="card rec-pair">
+        <div class="rec-cell">
+          <span class="rec-label">Best for Fishing XP/h</span>
+          <span class="rec-tree" id="fc-rec-fish-spot">—</span>
+          <span class="rec-xp" id="fc-rec-fish-xp">—</span>
+          <span class="rec-detail" id="fc-rec-fish-detail">Adjust inputs above to see a recommendation.</span>
+          <span class="rec-overtake" id="fc-rec-fish-overtake"></span>
+        </div>
+        <div class="rec-cell">
+          <span class="rec-label">Best for Cooking XP/h</span>
+          <span class="rec-tree" id="fc-rec-cook-spot">—</span>
+          <span class="rec-xp" id="fc-rec-cook-xp">—</span>
+          <span class="rec-detail" id="fc-rec-cook-detail">Adjust inputs above to see a recommendation.</span>
+          <span class="rec-overtake" id="fc-rec-cook-overtake"></span>
+        </div>
+        <p class="hint rec-overtake-hint">Overtake projections use your raw XP from the latest <strong>Lookup hiscores</strong> call. If you haven't looked yourself up — or you've edited a level manually since — the projection falls back to the minimum XP for the displayed level, so the "actions remaining" is an upper bound. Click rows to exclude spots from consideration.</p>
+      </section>
+
+      <section class="card">
+        <h3>Per-spot breakdown</h3>
+        <div class="table-wrap">
+          <table id="fc-results-table">
+            <thead>
+              <tr>
+                <th data-key="name">Spot</th>
+                <th data-key="minFishLevel" data-numeric>Fish req</th>
+                <th data-key="toolName">Tool</th>
+                <th data-key="eligibleFishLabel">Catching at your level</th>
+                <th data-key="catchTimeSec" data-numeric>Catch / fish</th>
+                <th data-key="avgCookSuccess" data-numeric>Cook success</th>
+                <th data-key="fishPerHour" data-numeric>Fish / h</th>
+                <th data-key="fishingXpPerHour" data-numeric>Fishing XP / h</th>
+                <th data-key="cookingXpPerHour" data-numeric>Cooking XP / h</th>
+                <th data-key="totalXpPerHour" data-numeric>Total XP / h</th>
+              </tr>
+            </thead>
+            <tbody id="fc-results-tbody"></tbody>
+          </table>
+        </div>
+        <p class="hint">Click a column header to sort. Ineligible spots are dimmed at the bottom of the table — hover for the blocking requirement.</p>
+      </section>
+
+      <section class="card">
+        <h3 id="fc-bar-title">Cooking XP/h per spot — current setup</h3>
+        <div class="chart-wrap"><canvas id="fc-bar-chart"></canvas></div>
+      </section>
+
+      <section class="card">
+        <h3 id="fc-line-title">Cooking XP/h vs Fishing level</h3>
+        <div class="chart-wrap"><canvas id="fc-line-chart"></canvas></div>
+        <p class="hint">Charts follow the active sort column (click a Fishing / Cooking / Total XP/h header to switch). Each spot draws two curves: <strong>solid</strong> = rate at your current Cooking level; <strong>dashed</strong> = same spot with Cooking maxed (99). Click a legend entry to toggle both. In Fishing XP/h mode the dashed twin is suppressed (cook level doesn't affect fishing rate).</p>
+      </section>
+
+      <footer>
+        <p>
+          Data sources: per-fish wiki pages (<code>Raw_shrimps</code>, <code>Shrimps</code>, etc.) via <code>scrape-fish-data.py</code>.
+          Re-run that script when the wiki updates its <code>{{Skilling success chart}}</code> parameters.
+        </p>
+      </footer>
+      </div><!-- /.view-body -->
+      </div><!-- /.view-flex -->
+    </section>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+  <script src="fish-catalog.snippet.js" defer></script>
+  <script src="data.js" defer></script>
+  <script src="core.js" defer></script>
+  <script src="wc-fletch-fm.js" defer></script>
+  <script src="fish-cook.js" defer></script>
+</body>
+</html>

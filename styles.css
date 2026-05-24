@@ -1,0 +1,674 @@
+:root {
+  --bg: #1f1f1f;
+  --bg-card: #2a2a2a;
+  --bg-card-alt: #333333;
+  --text: #e0e0e0;
+  --text-dim: #999;
+  --accent: #ff981f;
+  --accent-dim: #b06b15;
+  --border: #3a3a3a;
+  --good: #7eb47e;
+  --warn: #d6a754;
+  --bad: #c97070;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 2rem 1rem;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.container {
+  /* Wide enough that the 10-column fish-cook table lays out without horizontal
+     scroll on typical desktops, but capped so prose-style content (rec card,
+     banners) stays readable. The extra ~12rem is the rail gutter that the
+     non-home views consume; the rail sits inside it, so the actual content
+     column still gets the original ~1280px. */
+  max-width: calc(1280px + 12rem);
+  margin: 0 auto;
+}
+
+header {
+  margin-bottom: 1.5rem;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  color: var(--accent);
+  letter-spacing: 0.5px;
+}
+
+h2 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.subtitle {
+  margin: 0.25rem 0 0 0;
+  color: var(--text-dim);
+  font-size: 0.95rem;
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.inputs .input-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.inputs label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.inputs label span {
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.75rem;
+}
+
+input[type="number"], select {
+  background: var(--bg-card-alt);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+input[type="number"]:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+select option:disabled {
+  color: var(--text-dim);
+}
+
+.hint {
+  margin: 0.75rem 0 0 0;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.import-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+  flex-wrap: wrap;
+}
+
+label.inline {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+label.inline span {
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+}
+
+input[type="text"] {
+  background: var(--bg-card-alt);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  min-width: 180px;
+}
+input[type="text"]:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.btn {
+  background: var(--bg-card-alt);
+  color: var(--text);
+  border: 1px solid var(--accent-dim);
+  border-radius: 4px;
+  padding: 0.5rem 0.9rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 120ms, background 120ms;
+}
+.btn:hover { border-color: var(--accent); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.status {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+.status.loading { color: var(--text); }
+.status.success { color: var(--good); }
+.status.warn    { color: var(--warn); }
+.status.error   { color: var(--bad); }
+
+.warn-banner {
+  background: rgba(214, 167, 84, 0.08);
+  border: 1px solid var(--warn);
+  border-radius: 6px;
+  padding: 0.6rem 0.9rem;
+  margin: 0.85rem 0 0 0;
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.hidden { display: none; }
+
+.banner {
+  background: rgba(255, 152, 31, 0.08);
+  border: 1px solid var(--accent-dim);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.banner a {
+  color: var(--accent);
+}
+
+.recommendation {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.25rem;
+  border-left: 4px solid var(--accent);
+}
+
+/* Two-column recommendation card: best-for-cooking + best-for-fishing
+   side-by-side on wide viewports, stacked when narrow. */
+.rec-pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+.rec-cell {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.25rem;
+  border-left: 4px solid var(--accent);
+  padding-left: 0.85rem;
+}
+
+.rec-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+}
+
+.rec-tree {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.rec-xp {
+  font-size: 1.25rem;
+  color: var(--text);
+}
+
+.rec-detail {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+}
+
+.rec-overtake {
+  font-size: 0.85rem;
+  color: var(--text);
+  border-top: 1px dashed var(--border);
+  padding-top: 0.5rem;
+  margin-top: 0.25rem;
+}
+.rec-overtake:empty { display: none; }
+.rec-overtake strong { color: var(--accent); font-weight: 600; }
+.rec-overtake .ot-dim { color: var(--text-dim); }
+td .ot-dim { color: var(--text-dim); }
+
+/* The rec-pair card is a CSS grid of best-for cells; the trailing hint
+   paragraph needs to span every column so it doesn't get jammed into a
+   single cell next to the last rec-cell. */
+.rec-pair .rec-overtake-hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.table-wrap {
+  /* No overflow on desktop — setting overflow-x: auto would implicitly
+     promote overflow-y to auto and turn this into a scroll container,
+     which traps the sticky thead inside the wrap. Mobile breakpoint
+     re-enables horizontal scroll where the table can't fit. */
+}
+
+table {
+  width: 100%;
+  /* `separate` (instead of `collapse`) is required for sticky `thead` to
+     release at the table's bottom edge — collapsed-border tables anchor
+     sticky cells to the row, which never releases. */
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.9rem;
+  /* Explicit containing block so the sticky thead releases at the table's
+     bottom edge rather than walking off into the card's hint paragraph. */
+  position: relative;
+}
+
+thead {
+  /* Stick the whole thead row group (not individual cells). Browsers
+     disagree on the containing block for `display: table-header-group`,
+     so the release-at-table-bottom is enforced from JS — see
+     `wireStickyTheadRelease` in core.js, which toggles `thead-released`
+     once the tbody's bottom has scrolled past the sticky position. */
+  position: sticky;
+  top: 15.5rem;
+  z-index: 10;
+}
+
+/* `.thead-released` is set by JS once the thead would otherwise cover the
+   last tbody row. The JS also writes an inline `position: relative` and a
+   frozen `top` so the thead scrolls out naturally with the table from
+   that point onward, instead of snapping away. */
+
+thead th {
+  background: var(--bg-card-alt);
+  color: var(--text-dim);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.72rem;
+  padding: 0.55rem 0.6rem;
+  text-align: left;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+
+thead th:hover {
+  color: var(--text);
+}
+
+thead th.sorted {
+  color: var(--accent);
+}
+
+thead th.sorted::after {
+  content: "";
+  margin-left: 0.3rem;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+thead th.sorted.desc::after { border-top: 5px solid var(--accent); }
+thead th.sorted.asc::after  { border-bottom: 5px solid var(--accent); }
+
+thead th[data-numeric] { text-align: right; }
+tbody td { padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tbody td.numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;       /* numbers must never wrap to two lines */
+}
+tbody td.tree-name {
+  font-weight: 600;
+  white-space: nowrap;       /* spot/tree name fits on one line in wide layout */
+}
+
+/* Text-heavy columns: allow wrapping but at sensible breakpoints. The
+   "tool" and "catching at your level" cells in the fish-cook table can
+   legitimately need to wrap on narrower viewports. */
+#fc-results-table tbody td:nth-child(3),   /* Tool */
+#fc-results-table tbody td:nth-child(4) {  /* Catching at your level */
+  min-width: 8rem;
+}
+
+tbody tr {
+  cursor: pointer;
+}
+tbody tr.ineligible {
+  opacity: 0.45;
+}
+tbody tr.excluded {
+  opacity: 0.35;
+}
+tbody tr.excluded td.tree-name {
+  text-decoration: line-through;
+  color: var(--text-dim);
+}
+tbody tr.excluded.recommended {
+  /* If somehow both classes coexist, excluded wins — the row shouldn't
+     look like the active recommendation while it's being skipped. */
+  background: transparent;
+}
+
+tbody tr.ineligible .tree-name::after {
+  content: "🔒";
+  margin-left: 0.4rem;
+  opacity: 0.7;
+  font-size: 0.85em;
+}
+
+tbody tr.recommended {
+  background: rgba(255, 152, 31, 0.07);
+}
+
+tbody tr.recommended .tree-name {
+  color: var(--accent);
+}
+
+.tree-swatch {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 2px;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+
+.chart-wrap {
+  position: relative;
+  height: 640px;
+}
+
+
+footer {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+footer a {
+  color: var(--accent);
+}
+
+code {
+  background: var(--bg-card-alt);
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  font-size: 0.85rem;
+}
+
+/* ---- Top toolbar (shared across all views) ------------------------- */
+
+.top-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0;
+  padding: 2rem 0 0.85rem 0;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--bg);
+  /* Negative margin cancels the body's 2rem top padding so the toolbar
+     reaches the viewport's top edge once scrolled; the matching padding
+     keeps its content in the same visual spot when at rest. */
+  margin-top: -2rem;
+}
+
+.view-title {
+  position: sticky;
+  top: 5.5rem;
+  z-index: 30;
+  background: var(--bg);
+  padding: 0.75rem 0 0.5rem 0;
+  margin: 0 !important;
+  border-bottom: 1px solid var(--border);
+}
+
+.view-flex .inputs.card {
+  position: sticky;
+  top: 9rem;
+  z-index: 20;
+  margin-bottom: 1rem;
+}
+
+.top-toolbar-left {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.app-version {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+}
+.app-version:empty { display: none; }
+
+.top-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.home-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.85rem;
+  letter-spacing: 0.3px;
+}
+.home-link:hover { text-decoration: underline; }
+
+/* ---- Views (switched by hash router) ------------------------------- */
+
+.view {
+  /* visible by default; .hidden flips it off */
+}
+
+.view-title {
+  font-size: 1.4rem;
+  color: var(--accent);
+  margin: 0 0 1.25rem 0;
+  font-weight: 600;
+}
+
+/* ---- Startpage section picker -------------------------------------- */
+
+.lede {
+  font-size: 1rem;
+  color: var(--text);
+  margin: 0 0 1.5rem 0;
+}
+
+.section-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-card {
+  display: block;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 6px;
+  padding: 1.25rem 1.25rem 1.4rem;
+  color: var(--text);
+  text-decoration: none;
+  transition: border-color 120ms, transform 120ms;
+}
+.section-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.section-card h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.15rem;
+}
+.section-card p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-dim);
+}
+
+/* ---- Gauntlets checkbox row ---------------------------------------- */
+
+.inputs label.checkbox-cell {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  align-self: end;
+  padding-bottom: 0.55rem;
+}
+
+.inputs label.checkbox-cell span {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* ---- Mode rail (sticky skill selector per section) ---------------- */
+
+/* Each non-home view lays out as: title above, then a flex row with the
+   rail on the left and the content body on the right. The rail uses
+   position: sticky so its top edge starts aligned with the inputs card
+   (both are flex-start children of .view-flex), scrolls up with the
+   content, and anchors at top:1rem once the user scrolls past it. */
+.view-flex {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+.view-body {
+  flex: 1 1 auto;
+  min-width: 0;     /* allow children to shrink past their content width */
+}
+
+.mode-rail {
+  position: sticky;
+  /* Sit just below the sticky inputs card so the rail's "Tracking" header
+     stays roughly aligned with the input labels as the user scrolls. */
+  top: 9rem;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.55rem 0.6rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  min-width: 9.5rem;
+}
+
+.mode-rail-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+  padding-bottom: 0.15rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.25rem;
+  text-align: center;
+}
+
+.mode-rail-btn {
+  background: var(--bg-card-alt);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.4rem 0.6rem;
+  font-family: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 120ms, background 120ms, color 120ms;
+}
+.mode-rail-btn:hover { border-color: var(--accent); }
+.mode-rail-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #1f1f1f;
+  font-weight: 600;
+}
+
+/* The rail is now in normal flow (sticky inside .view-flex), so no body
+   padding shenanigans are needed — the layout naturally reserves space
+   for it. */
+
+/* ---- Responsive --------------------------------------------------- */
+
+/* On narrower desktop / tablet widths, allow the spot name to wrap so the
+   numeric columns get to stay on one line. */
+@media (max-width: 1100px) {
+  tbody td.tree-name { white-space: normal; }
+  thead th { padding: 0.5rem 0.45rem; font-size: 0.68rem; }
+  tbody td { padding: 0.45rem 0.45rem; }
+  table { font-size: 0.85rem; }
+}
+
+@media (max-width: 600px) {
+  body { padding: 1rem 0.5rem; }
+  h1 { font-size: 1.4rem; }
+  .rec-tree { font-size: 1.2rem; }
+  .chart-wrap { height: 520px; }
+  .top-toolbar { flex-direction: column; align-items: stretch; }
+  .top-toolbar-right { justify-content: flex-start; }
+  input[type="text"] { min-width: 0; flex: 1; }
+  /* Rail too wide for phones — fall back to the table-header sorting. */
+  .mode-rail { display: none; }
+  /* On phones the toolbar becomes column-stacked and its height is
+     unpredictable; the sticky stack would shove half the chart offscreen,
+     so drop back to normal flow. */
+  .top-toolbar { position: static; margin-top: 0; padding-top: 0; margin-bottom: 1.25rem; }
+  .view-title { position: static; border-bottom: none; padding: 0; margin: 0 0 1.25rem 0 !important; }
+  .view-flex .inputs.card { position: static; }
+  thead { position: static; }
+  /* On phones the table is allowed to overflow horizontally inside its
+     wrap — the sticky thead is already disabled above, so the wrap can
+     safely become a scroll container without trapping it. */
+  .table-wrap { overflow-x: auto; }
+}
