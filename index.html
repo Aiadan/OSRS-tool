@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=1.1.2" />
+  <link rel="stylesheet" href="styles.css?v=1.1.3" />
 </head>
 <body>
   <main class="container">
@@ -230,6 +230,13 @@
           <span class="rec-detail" id="fc-rec-cook-detail">Adjust inputs above to see a recommendation.</span>
           <span class="rec-overtake" id="fc-rec-cook-overtake"></span>
         </div>
+        <div class="rec-cell">
+          <span class="rec-label">Best for Total XP/h</span>
+          <span class="rec-tree" id="fc-rec-total-spot">—</span>
+          <span class="rec-xp" id="fc-rec-total-xp">—</span>
+          <span class="rec-detail" id="fc-rec-total-detail">Adjust inputs above to see a recommendation.</span>
+          <span class="rec-overtake" id="fc-rec-total-overtake"></span>
+        </div>
         </div>
         <p class="hint rec-overtake-hint">Overtake projections use your raw XP from the latest <strong>Lookup hiscores</strong> call. If you haven't looked yourself up — or you've edited a level manually since — the projection falls back to the minimum XP for the displayed level, so the "actions remaining" is an upper bound. Click rows to exclude spots from consideration.</p>
       </section>
@@ -362,13 +369,13 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-  <script src="fish-catalog.snippet.js?v=1.1.2" defer></script>
-  <script src="thieving-catalog.snippet.js?v=1.1.2" defer></script>
-  <script src="data.js?v=1.1.2" defer></script>
-  <script src="core.js?v=1.1.2" defer></script>
-  <script src="wc-fletch-fm.js?v=1.1.2" defer></script>
-  <script src="fish-cook.js?v=1.1.2" defer></script>
-  <script src="thieving.js?v=1.1.2" defer></script>
+  <script src="fish-catalog.snippet.js?v=1.1.3" defer></script>
+  <script src="thieving-catalog.snippet.js?v=1.1.3" defer></script>
+  <script src="data.js?v=1.1.3" defer></script>
+  <script src="core.js?v=1.1.3" defer></script>
+  <script src="wc-fletch-fm.js?v=1.1.3" defer></script>
+  <script src="fish-cook.js?v=1.1.3" defer></script>
+  <script src="thieving.js?v=1.1.3" defer></script>
 
   <!-- GoatCounter — privacy-friendly, cookieless analytics (no consent banner). -->
   <script data-goatcounter="https://osrs-tool.goatcounter.com/count"
