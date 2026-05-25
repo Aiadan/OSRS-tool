@@ -240,6 +240,22 @@ window.TO = (function () {
     if (el && v) el.textContent = 'v' + v;
   }
 
+  // Each section's data/calc notes live in a .banner that's collapsed by
+  // default; the (i) button in the section title reveals it on demand (linked
+  // by aria-controls). Wired once — the buttons exist in every view's markup.
+  function wireInfoToggles() {
+    document.querySelectorAll('.info-btn[aria-controls]').forEach((btn) => {
+      const panel = document.getElementById(btn.getAttribute('aria-controls'));
+      if (!panel) return;
+      btn.addEventListener('click', () => {
+        const open = btn.getAttribute('aria-expanded') !== 'true';
+        btn.setAttribute('aria-expanded', String(open));
+        panel.hidden = !open;
+        if (TO.syncStickyThead) TO.syncStickyThead();
+      });
+    });
+  }
+
   function wireHiscores() {
     const input  = document.getElementById('rsn-input');
     const btn    = document.getElementById('rsn-btn');
@@ -489,6 +505,7 @@ window.TO = (function () {
   function init() {
     migrateLegacyStorage();
     wireVersion();
+    wireInfoToggles();
     wireHiscores();
     wireStickyTheadRelease();
 

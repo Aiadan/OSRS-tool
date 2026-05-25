@@ -52,7 +52,9 @@
 
     <!-- ====================  Woodcutting + Fletching + Firemaking  ==================== -->
     <section class="view hidden" data-view="wc-fletch-fm">
-      <h2 class="view-title">Woodcutting + Fletching + Firemaking</h2>
+      <h2 class="view-title">Woodcutting + Fletching + Firemaking
+        <button type="button" class="info-btn" aria-expanded="false" aria-controls="info-wc-fletch-fm" aria-label="How this data is calculated">i</button>
+      </h2>
       <div class="view-flex">
       <aside class="mode-rail">
         <div class="mode-rail-label">Tracking</div>
@@ -87,7 +89,7 @@
         </div>
       </section>
 
-      <section class="banner">
+      <section class="banner" id="info-wc-fletch-fm" hidden>
         <strong>Calibration notice:</strong> tree chop chance and axe power are community-derived starting points (no authoritative wiki values exist). Firemaking XP values and the linear 65→256 ignition ramp to level 43 are wiki-verified. Relative ranking between trees is reliable; absolute XP/h is approximate, especially for hardwoods.
       </section>
 
@@ -167,7 +169,9 @@
 
     <!-- ====================  Fishing + Cooking  ==================== -->
     <section class="view hidden" data-view="fish-cook">
-      <h2 class="view-title">Fishing + Cooking</h2>
+      <h2 class="view-title">Fishing + Cooking
+        <button type="button" class="info-btn" aria-expanded="false" aria-controls="info-fish-cook" aria-label="How this data is calculated">i</button>
+      </h2>
       <div class="view-flex">
       <aside class="mode-rail">
         <div class="mode-rail-label">Tracking</div>
@@ -206,7 +210,7 @@
         </div>
       </section>
 
-      <section class="banner">
+      <section class="banner" id="info-fish-cook" hidden>
         <strong>Data note:</strong> per-fish catch and burn rates are scraped from the OSRS wiki's <code>{{Skilling success chart}}</code> templates and use the wiki's official formula. Per-spot aggregate uses the OSRS cascade mechanic (higher-tier fish in a spot are rolled first). The harpoon-tier dropdown only affects harpoon-family spots.
       </section>
 
@@ -277,7 +281,9 @@
 
     <!-- ====================  Thieving  ==================== -->
     <section class="view hidden" data-view="thieving">
-      <h2 class="view-title">Thieving</h2>
+      <h2 class="view-title">Thieving
+        <button type="button" class="info-btn" aria-expanded="false" aria-controls="info-thieving" aria-label="How this data is calculated">i</button>
+      </h2>
       <div class="view-flex">
       <div class="view-body">
 
@@ -308,7 +314,7 @@
         </div>
       </section>
 
-      <section class="banner">
+      <section class="banner" id="info-thieving" hidden>
         <strong>How XP/h is modelled:</strong> Pickpocketing assumes an attempt every 2 ticks (1.2s), and a failed attempt costs an 8-tick (4.8s) stun — so success rate at your level matters a lot. Gear boosts (gloves +5%, cape +10%, Ardougne Hard +10%) stack onto the success curve. Stalls are 100% success above the level requirement, limited by respawn time. Click a row to exclude a method.
       </section>
 

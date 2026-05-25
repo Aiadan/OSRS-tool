@@ -630,6 +630,39 @@ code {
   font-weight: 700;
   letter-spacing: 0.5px;
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* (i) toggle for each section's data/calc notes — collapsed by default. */
+.info-btn {
+  flex: 0 0 auto;
+  width: 1.45rem;
+  height: 1.45rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--accent-dim);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--accent);
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: none;
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms, color 120ms;
+}
+.info-btn:hover { border-color: var(--accent); background: rgba(244, 181, 63, 0.12); }
+.info-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.info-btn[aria-expanded="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #1f1f1f;
 }
 
 /* ---- Startpage section picker -------------------------------------- */
