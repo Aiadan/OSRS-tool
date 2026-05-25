@@ -183,9 +183,53 @@
       : `${TO.fmt(it.xp, { decimals: 1 })} XP/steal · ${it.respawn}s respawn`;
   }
 
+  // Single-skill overtake: sweep Thieving level from current+1 to 99 and find
+  // the first level where a different method becomes best for this activity.
+  // Exclusion-aware via bestRow; locked methods only count once they unlock.
+  function findOvertake(forMode, currentBest, inputs) {
+    for (let L = inputs.level + 1; L <= 99; L++) {
+      const best = bestRow(buildRows(forMode, { ...inputs, level: L }));
+      if (best && best.item.id !== currentBest.item.id) return { level: L, newBest: best };
+    }
+    return null;
+  }
+
+  function writeOvertake(prefix, forMode, best, inputs) {
+    const el = document.getElementById(`th-rec-${prefix}-overtake`);
+    if (!el) return;
+    if (!best) { el.innerHTML = ''; return; }
+    const xpPerHour   = best.rates.xpPerHour;
+    const xpPerAction = best.item.xp;        // XP per successful pickpocket / steal
+    const noun = forMode === 'pickpocket' ? 'pickpockets' : 'steals';
+    if (!(xpPerHour > 0) || !(xpPerAction > 0)) { el.innerHTML = ''; return; }
+    if (inputs.level >= 99) {
+      el.innerHTML = `<span class="ot-dim">Already at Thieving 99 — nothing left to overtake.</span>`;
+      return;
+    }
+    const currentXp = TO.getSkillXp('th-level');
+    const ot = findOvertake(forMode, best, inputs);
+    if (!ot) {
+      const xpTo99 = Math.max(0, TO.xpAt(99) - currentXp);
+      el.innerHTML =
+        `Best method through <strong>lvl 99</strong> — ` +
+        `${TO.fmt(Math.ceil(xpTo99 / xpPerAction))} more ${best.item.name} ${noun} ` +
+        `<span class="ot-dim">(≈${TO.fmtDuration(xpTo99 / xpPerHour)})</span>`;
+      return;
+    }
+    const xpNeeded = Math.max(0, TO.xpAt(ot.level) - currentXp);
+    el.innerHTML =
+      `Overtaken by <strong>${ot.newBest.item.name}</strong> at lvl ${ot.level} — ` +
+      `${TO.fmt(Math.ceil(xpNeeded / xpPerAction))} more ${best.item.name} ${noun} ` +
+      `<span class="ot-dim">(≈${TO.fmtDuration(xpNeeded / xpPerHour)})</span>`;
+  }
+
   function renderRec(inputs) {
-    writeRec('pick',  bestRow(buildRows('pickpocket', inputs)), inputs, 'pickpocket');
-    writeRec('stall', bestRow(buildRows('stalls', inputs)),     inputs, 'stalls');
+    const pickBest  = bestRow(buildRows('pickpocket', inputs));
+    const stallBest = bestRow(buildRows('stalls', inputs));
+    writeRec('pick',  pickBest,  inputs, 'pickpocket');
+    writeRec('stall', stallBest, inputs, 'stalls');
+    writeOvertake('pick',  'pickpocket', pickBest,  inputs);
+    writeOvertake('stall', 'stalls',     stallBest, inputs);
   }
 
   // ---- Table -----------------------------------------------------------
