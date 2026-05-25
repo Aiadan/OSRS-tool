@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=1.0.5" />
+  <link rel="stylesheet" href="styles.css?v=1.1.0" />
 </head>
 <body>
   <main class="container">
@@ -42,13 +42,19 @@
           <h2>Fishing + Cooking</h2>
           <p>Best fishing spot for combined fishing & cooking XP/h.</p>
         </a>
+        <a class="section-card" href="#/thieving">
+          <h2>Thieving</h2>
+          <p>Best pickpocket target or stall for Thieving XP/h.</p>
+        </a>
       </div>
       <p class="hint">Last-used section is remembered, so re-opening this page jumps you straight back in.</p>
     </section>
 
     <!-- ====================  Woodcutting + Fletching + Firemaking  ==================== -->
     <section class="view hidden" data-view="wc-fletch-fm">
-      <h2 class="view-title">Woodcutting + Fletching + Firemaking</h2>
+      <h2 class="view-title">Woodcutting + Fletching + Firemaking
+        <button type="button" class="info-btn" aria-expanded="false" aria-controls="info-wc-fletch-fm" aria-label="How this data is calculated">i</button>
+      </h2>
       <div class="view-flex">
       <aside class="mode-rail">
         <div class="mode-rail-label">Tracking</div>
@@ -83,11 +89,12 @@
         </div>
       </section>
 
-      <section class="banner">
+      <section class="banner" id="info-wc-fletch-fm" hidden>
         <strong>Calibration notice:</strong> tree chop chance and axe power are community-derived starting points (no authoritative wiki values exist). Firemaking XP values and the linear 65→256 ignition ramp to level 43 are wiki-verified. Relative ranking between trees is reliable; absolute XP/h is approximate, especially for hardwoods.
       </section>
 
-      <section class="card rec-pair">
+      <section class="card rec-card">
+        <div class="rec-pair">
         <div class="rec-cell">
           <span class="rec-label">Best for WC XP/h</span>
           <span class="rec-tree" id="rec-wc-tree">—</span>
@@ -108,6 +115,7 @@
           <span class="rec-xp" id="rec-fm-xp">—</span>
           <span class="rec-detail" id="rec-fm-detail">Chop and burn (every tree is burnable).</span>
           <span class="rec-overtake" id="rec-fm-overtake"></span>
+        </div>
         </div>
         <p class="hint rec-overtake-hint">Overtake projections use your raw XP from the latest <strong>Lookup hiscores</strong> call. If you haven't looked yourself up — or you've edited a level manually since — the projection falls back to the minimum XP for the displayed level, so the "actions remaining" is an upper bound. Click rows to exclude trees from consideration.</p>
       </section>
@@ -161,7 +169,9 @@
 
     <!-- ====================  Fishing + Cooking  ==================== -->
     <section class="view hidden" data-view="fish-cook">
-      <h2 class="view-title">Fishing + Cooking</h2>
+      <h2 class="view-title">Fishing + Cooking
+        <button type="button" class="info-btn" aria-expanded="false" aria-controls="info-fish-cook" aria-label="How this data is calculated">i</button>
+      </h2>
       <div class="view-flex">
       <aside class="mode-rail">
         <div class="mode-rail-label">Tracking</div>
@@ -200,11 +210,12 @@
         </div>
       </section>
 
-      <section class="banner">
+      <section class="banner" id="info-fish-cook" hidden>
         <strong>Data note:</strong> per-fish catch and burn rates are scraped from the OSRS wiki's <code>{{Skilling success chart}}</code> templates and use the wiki's official formula. Per-spot aggregate uses the OSRS cascade mechanic (higher-tier fish in a spot are rolled first). The harpoon-tier dropdown only affects harpoon-family spots.
       </section>
 
-      <section class="card rec-pair">
+      <section class="card rec-card">
+        <div class="rec-pair">
         <div class="rec-cell">
           <span class="rec-label">Best for Fishing XP/h</span>
           <span class="rec-tree" id="fc-rec-fish-spot">—</span>
@@ -218,6 +229,7 @@
           <span class="rec-xp" id="fc-rec-cook-xp">—</span>
           <span class="rec-detail" id="fc-rec-cook-detail">Adjust inputs above to see a recommendation.</span>
           <span class="rec-overtake" id="fc-rec-cook-overtake"></span>
+        </div>
         </div>
         <p class="hint rec-overtake-hint">Overtake projections use your raw XP from the latest <strong>Lookup hiscores</strong> call. If you haven't looked yourself up — or you've edited a level manually since — the projection falls back to the minimum XP for the displayed level, so the "actions remaining" is an upper bound. Click rows to exclude spots from consideration.</p>
       </section>
@@ -267,14 +279,96 @@
       </div><!-- /.view-flex -->
     </section>
 
+    <!-- ====================  Thieving  ==================== -->
+    <section class="view hidden" data-view="thieving">
+      <h2 class="view-title">Thieving
+        <button type="button" class="info-btn" aria-expanded="false" aria-controls="info-thieving" aria-label="How this data is calculated">i</button>
+      </h2>
+      <div class="view-flex">
+      <div class="view-body">
+
+      <div class="th-activity" role="tablist">
+        <button type="button" class="mode-rail-btn active" data-th-mode="pickpocket">Pickpocketing</button>
+        <button type="button" class="mode-rail-btn" data-th-mode="stalls">Stalls</button>
+      </div>
+
+      <section class="inputs card">
+        <div class="input-row">
+          <label>
+            <span>Thieving</span>
+            <input type="number" id="th-level" min="1" max="99" step="1" value="50" />
+          </label>
+          <label class="checkbox-cell">
+            <input type="checkbox" id="th-gloves" /><span>Gloves of silence</span>
+          </label>
+          <label class="checkbox-cell">
+            <input type="checkbox" id="th-cape" /><span>Thieving cape</span>
+          </label>
+          <label class="checkbox-cell">
+            <input type="checkbox" id="th-ardue" /><span>Ardougne Hard diary</span>
+          </label>
+          <label>
+            <span>Efficiency</span>
+            <input type="number" id="th-efficiency" min="0.5" max="1" step="0.05" value="0.95" />
+          </label>
+        </div>
+      </section>
+
+      <section class="banner" id="info-thieving" hidden>
+        <strong>How XP/h is modelled:</strong> Pickpocketing assumes an attempt every 2 ticks (1.2s), and a failed attempt costs an 8-tick (4.8s) stun — so success rate at your level matters a lot. Gear boosts (gloves +5%, cape +10%, Ardougne Hard +10%) stack onto the success curve. Stalls are 100% success above the level requirement, limited by respawn time. Click a row to exclude a method.
+      </section>
+
+      <section class="card rec-pair">
+        <div class="rec-cell">
+          <span class="rec-label">Best pickpocket XP/h</span>
+          <span class="rec-tree" id="th-rec-pick-name">—</span>
+          <span class="rec-xp" id="th-rec-pick-xp">—</span>
+          <span class="rec-detail" id="th-rec-pick-detail">Adjust inputs above to see a recommendation.</span>
+        </div>
+        <div class="rec-cell">
+          <span class="rec-label">Best stall XP/h</span>
+          <span class="rec-tree" id="th-rec-stall-name">—</span>
+          <span class="rec-xp" id="th-rec-stall-xp">—</span>
+          <span class="rec-detail" id="th-rec-stall-detail">Adjust inputs above to see a recommendation.</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3 id="th-table-title">Pickpocket targets</h3>
+        <div class="table-wrap">
+          <table id="th-results-table">
+            <thead><tr id="th-thead-row"></tr></thead>
+            <tbody id="th-results-tbody"></tbody>
+          </table>
+        </div>
+        <p class="hint">Click a column header to sort. Click a row to exclude that method from the best-for pick and the charts. Targets you can't attempt yet are dimmed.</p>
+      </section>
+
+      <section class="card">
+        <h3 id="th-bar-title">Thieving XP/h per method — current setup</h3>
+        <div class="chart-wrap"><canvas id="th-bar-chart"></canvas></div>
+      </section>
+
+      <section class="card">
+        <h3 id="th-line-title">Thieving XP/h vs Thieving level</h3>
+        <div class="chart-wrap"><canvas id="th-line-chart"></canvas></div>
+        <p class="hint">Each curve is one method's XP/h across Thieving levels at your current gear. Click a legend entry to toggle it.</p>
+      </section>
+
+      </div><!-- /.view-body -->
+      </div><!-- /.view-flex -->
+    </section>
+
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-  <script src="fish-catalog.snippet.js?v=1.0.5" defer></script>
-  <script src="data.js?v=1.0.5" defer></script>
-  <script src="core.js?v=1.0.5" defer></script>
-  <script src="wc-fletch-fm.js?v=1.0.5" defer></script>
-  <script src="fish-cook.js?v=1.0.5" defer></script>
+  <script src="fish-catalog.snippet.js?v=1.1.0" defer></script>
+  <script src="thieving-catalog.snippet.js?v=1.1.0" defer></script>
+  <script src="data.js?v=1.1.0" defer></script>
+  <script src="core.js?v=1.1.0" defer></script>
+  <script src="wc-fletch-fm.js?v=1.1.0" defer></script>
+  <script src="fish-cook.js?v=1.1.0" defer></script>
+  <script src="thieving.js?v=1.1.0" defer></script>
 
   <!-- GoatCounter — privacy-friendly, cookieless analytics (no consent banner). -->
   <script data-goatcounter="https://osrs-tool.goatcounter.com/count"

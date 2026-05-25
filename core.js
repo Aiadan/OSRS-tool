@@ -17,7 +17,7 @@ window.TO = (function () {
   const KEY_RSN          = 'training-optimizer:rsn';
   const KEY_SKILL_XP     = 'training-optimizer:skill-xp';
   const KEY_LEGACY_V1    = 'training-optimizer:v1';   // pre-multisection storage
-  const VALID_SECTIONS   = new Set(['wc-fletch-fm', 'fish-cook']);
+  const VALID_SECTIONS   = new Set(['wc-fletch-fm', 'fish-cook', 'thieving']);
 
   // ---- OSRS XP table ----------------------------------------------------
   // Standard cumulative-XP table: XP_TABLE[L] = experience required to reach
@@ -229,7 +229,8 @@ window.TO = (function () {
     'fletch-level':  { idx: 10, label: 'Fletching' },
     'fm-level':      { idx: 12, label: 'Firemaking' },
     'fc-fish-level': { idx: 11, label: 'Fishing' },
-    'fc-cook-level': { idx: 8,  label: 'Cooking' }
+    'fc-cook-level': { idx: 8,  label: 'Cooking' },
+    'th-level':      { idx: 18, label: 'Thieving' }
   };
 
   // Stamp the page with the version from TRAINING_DATA.meta (single source).
@@ -237,6 +238,22 @@ window.TO = (function () {
     const el = document.getElementById('app-version');
     const v  = window.TRAINING_DATA && window.TRAINING_DATA.meta && window.TRAINING_DATA.meta.version;
     if (el && v) el.textContent = 'v' + v;
+  }
+
+  // Each section's data/calc notes live in a .banner that's collapsed by
+  // default; the (i) button in the section title reveals it on demand (linked
+  // by aria-controls). Wired once — the buttons exist in every view's markup.
+  function wireInfoToggles() {
+    document.querySelectorAll('.info-btn[aria-controls]').forEach((btn) => {
+      const panel = document.getElementById(btn.getAttribute('aria-controls'));
+      if (!panel) return;
+      btn.addEventListener('click', () => {
+        const open = btn.getAttribute('aria-expanded') !== 'true';
+        btn.setAttribute('aria-expanded', String(open));
+        panel.hidden = !open;
+        if (TO.syncStickyThead) TO.syncStickyThead();
+      });
+    });
   }
 
   function wireHiscores() {
@@ -488,6 +505,7 @@ window.TO = (function () {
   function init() {
     migrateLegacyStorage();
     wireVersion();
+    wireInfoToggles();
     wireHiscores();
     wireStickyTheadRelease();
 
