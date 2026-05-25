@@ -399,12 +399,15 @@
   }
 
   function renderRecommendation(rows, inputs) {
-    const cookBest = bestEligibleByKey(rows, 'cookingXpPerHour');
-    const fishBest = bestEligibleByKey(rows, 'fishingXpPerHour');
-    writeRecCell('cook', cookBest, inputs, 'cookingXpPerHour', 'Cooking XP/h');
-    writeRecCell('fish', fishBest, inputs, 'fishingXpPerHour', 'Fishing XP/h');
+    const cookBest  = bestEligibleByKey(rows, 'cookingXpPerHour');
+    const fishBest  = bestEligibleByKey(rows, 'fishingXpPerHour');
+    const totalBest = bestEligibleByKey(rows, 'totalXpPerHour');
+    writeRecCell('cook',  cookBest,  inputs, 'cookingXpPerHour', 'Cooking XP/h');
+    writeRecCell('fish',  fishBest,  inputs, 'fishingXpPerHour', 'Fishing XP/h');
+    writeRecCell('total', totalBest, inputs, 'totalXpPerHour',   'Total XP/h');
     writeOvertake('cook', cookBest, 'cook', inputs);
     writeOvertake('fish', fishBest, 'fish', inputs);
+    writeTotalOvertake(totalBest, inputs);
   }
 
   // ---- Overtake projection ---------------------------------------------
@@ -515,6 +518,120 @@
       `Overtaken by <strong>${ot.newBest.spot.name}</strong> at lvl ${ot.level} — ` +
       `${TO.fmt(actions)} more ${cfg.actionLabel(best)} ` +
       `<span class="ot-dim">(≈${TO.fmtDuration(hours)})</span>${needFish}`;
+  }
+
+  // ---- Total overtake (single-axis) ------------------------------------
+  // Total XP/h depends on BOTH Fishing and Cooking, so there's no single skill
+  // to sweep. Per the agreed model we look only for a new best-total spot
+  // reachable by raising JUST ONE skill (the other is then already sufficient
+  // for that band): sweep Fishing with Cooking held, and Cooking with Fishing
+  // held. If both axes find one, show whichever you'd reach first in playtime
+  // at the current spot. If neither does (a better band needs both skills
+  // raised), leave the line blank — that joint case is deferred.
+  function findTotalOvertake(currentBest, inputs) {
+    const harpoonTool   = HARPOONS.find(h => h.id === inputs.harpoonId) || HARPOONS[0];
+    const cookingMethod = METHODS.find(m => m.id === inputs.methodId) || METHODS[0];
+    const ratesAt = (fishLevel, cookLevel) => SPOTS.map(spot => ({
+      spot,
+      rates: spotRates({ fishLevel, cookLevel, spot, harpoonTool, cookingMethod,
+                         hasGauntlets: inputs.hasGauntlets, efficiency: inputs.efficiency })
+    }));
+    const axes = [
+      { skillLabel: 'Fishing', inputId: 'fc-fish-level', rateKey: 'fishingXpPerHour',
+        start: inputs.fishLevel, rowsAt: L => ratesAt(L, inputs.cookLevel) },
+      { skillLabel: 'Cooking', inputId: 'fc-cook-level', rateKey: 'cookingXpPerHour',
+        start: inputs.cookLevel, rowsAt: L => ratesAt(inputs.fishLevel, L) }
+    ];
+    let best = null;
+    for (const ax of axes) {
+      if (ax.start >= 99) continue;
+      // Grinding the current spot only advances this skill if the spot earns it;
+      // if its rate is 0 (e.g. can't cook the catch), this axis never triggers.
+      const rateH = currentBest.rates[ax.rateKey];
+      if (!(rateH > 0)) continue;
+      for (let L = ax.start + 1; L <= 99; L++) {
+        const b = bestEligibleByKey(ax.rowsAt(L), 'totalXpPerHour');
+        if (!b || b.spot.id === currentBest.spot.id) continue;
+        const xpNeeded   = Math.max(0, TO.xpAt(L) - TO.getSkillXp(ax.inputId));
+        const hours      = xpNeeded / rateH;
+        const xpPerCatch = rateH / currentBest.rates.fishPerHour;
+        const catches    = xpPerCatch > 0 ? Math.ceil(xpNeeded / xpPerCatch) : 0;
+        if (!best || hours < best.hours) best = { skillLabel: ax.skillLabel, level: L, newBest: b, hours, catches };
+        break;
+      }
+    }
+    return best;
+  }
+
+  // Joint-increase overtake. When no single skill alone reaches a new band, the
+  // realistic path is to TRAIN the current best-total spot — which raises BOTH
+  // Fishing and Cooking at that spot's XP rates. Walk that trajectory one
+  // level-up at a time (re-picking the best each step) until a different spot
+  // becomes best-total; that crossing is the overtake. Returns the level pair
+  // plus catches/time to reach it, or null if the spot stays best all the way
+  // to the cap (i.e. best through 99 for the path you'd actually take).
+  // `getSkillXp` seeds from hiscores when available, else the level's minimum
+  // XP — same convention as the single-skill projections.
+  function findTrajectoryOvertake(currentBest, inputs) {
+    const harpoonTool   = HARPOONS.find(h => h.id === inputs.harpoonId) || HARPOONS[0];
+    const cookingMethod = METHODS.find(m => m.id === inputs.methodId) || METHODS[0];
+    const startId = currentBest.spot.id;
+    const bestAt = (f, c) => bestEligibleByKey(
+      SPOTS.map(spot => ({ spot, rates: spotRates({ fishLevel: f, cookLevel: c, spot,
+        harpoonTool, cookingMethod, hasGauntlets: inputs.hasGauntlets, efficiency: inputs.efficiency }) })),
+      'totalXpPerHour');
+    let f = inputs.fishLevel, c = inputs.cookLevel;
+    let fishXp = TO.getSkillXp('fc-fish-level');
+    let cookXp = TO.getSkillXp('fc-cook-level');
+    let hours = 0, catches = 0, guard = 0;
+    while ((f < 99 || c < 99) && guard++ < 400) {
+      const best = bestAt(f, c);
+      if (!best) return null;
+      if (best.spot.id !== startId) {
+        return { fishLevel: f, cookLevel: c, newBest: best, hours, catches: Math.ceil(catches) };
+      }
+      const rF = best.rates.fishingXpPerHour, rC = best.rates.cookingXpPerHour;
+      // Time to each skill's next level-up at the spot's current rates.
+      const tF = (f < 99 && rF > 0) ? Math.max(0, TO.xpAt(f + 1) - fishXp) / rF : Infinity;
+      const tC = (c < 99 && rC > 0) ? Math.max(0, TO.xpAt(c + 1) - cookXp) / rC : Infinity;
+      const dt = Math.min(tF, tC);
+      if (!isFinite(dt)) break;   // neither skill can advance (e.g. a no-cook spot already at Fishing 99)
+      hours += dt; catches += best.rates.fishPerHour * dt;
+      fishXp += rF * dt; cookXp += rC * dt;
+      if (tF <= tC && f < 99) f++;
+      if (tC <= tF && c < 99) c++;
+    }
+    return null;   // never switched on the way to the cap — best-total spot for the whole climb
+  }
+
+  function writeTotalOvertake(best, inputs) {
+    const el = document.getElementById('fc-rec-total-overtake');
+    if (!el) return;
+    if (!best) { el.innerHTML = ''; return; }
+    if (inputs.fishLevel >= 99 && inputs.cookLevel >= 99) {
+      el.innerHTML = `<span class="ot-dim">Already at Fishing &amp; Cooking 99 — nothing left to overtake.</span>`;
+      return;
+    }
+    // 1) A single skill alone reaches a new band (the other is already enough).
+    const ot = findTotalOvertake(best, inputs);
+    if (ot) {
+      el.innerHTML =
+        `Overtaken by <strong>${ot.newBest.spot.name}</strong> at ${ot.skillLabel} ${ot.level} — ` +
+        `${TO.fmt(ot.catches)} more ${best.spot.name} catches ` +
+        `<span class="ot-dim">(≈${TO.fmtDuration(ot.hours)})</span>`;
+      return;
+    }
+    // 2) Joint case: training this spot raises both skills until a new band.
+    const traj = findTrajectoryOvertake(best, inputs);
+    if (traj) {
+      el.innerHTML =
+        `Overtaken by <strong>${traj.newBest.spot.name}</strong> at Fishing ${traj.fishLevel}/Cooking ${traj.cookLevel} — ` +
+        `${TO.fmt(traj.catches)} more ${best.spot.name} catches ` +
+        `<span class="ot-dim">(≈${TO.fmtDuration(traj.hours)}, training both)</span>`;
+      return;
+    }
+    // 3) Never overtaken on the way to the cap.
+    el.innerHTML = `Best total spot through <strong>lvl 99</strong>.`;
   }
 
   // Modes drive the highlighted row AND the charts. The sort key selects

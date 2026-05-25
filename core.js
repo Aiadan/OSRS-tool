@@ -271,6 +271,37 @@ window.TO = (function () {
     });
   }
 
+  // Visual "in sync with hiscores" indicator on each tracked level input. A
+  // field is synced when the stored hiscores XP exists AND maps back to the
+  // current level value — i.e. exactly when getSkillXp() would use the real XP
+  // rather than fall back to the level minimum. So the indicator tells you
+  // whether the overtake projections are running on your true XP or an estimate.
+  function updateSyncIndicators() {
+    const xpMap = loadSkillXpMap();
+    for (const inputId of Object.keys(HISCORES_INPUTS)) {
+      const el = document.getElementById(inputId);
+      if (!el) continue;
+      const lvl    = Math.max(1, Math.min(99, parseInt(el.value, 10) || 1));
+      const stored = xpMap[inputId];
+      const synced = stored != null && levelForXp(stored) === lvl;
+      const label  = el.closest('label');
+      if (label) label.classList.toggle('xp-synced', synced);
+      el.title = synced
+        ? 'In sync — this level’s XP is from your last hiscores lookup.'
+        : 'Not from hiscores — XP is estimated as this level’s minimum (look yourself up, or you’ve edited it since).';
+    }
+  }
+
+  function wireSyncIndicators() {
+    for (const inputId of Object.keys(HISCORES_INPUTS)) {
+      const el = document.getElementById(inputId);
+      if (!el) continue;
+      el.addEventListener('input', updateSyncIndicators);
+      el.addEventListener('change', updateSyncIndicators);
+    }
+    updateSyncIndicators();   // reflect any stored state on load
+  }
+
   function wireHiscores() {
     const input  = document.getElementById('rsn-input');
     const btn    = document.getElementById('rsn-btn');
@@ -321,6 +352,9 @@ window.TO = (function () {
       saveSkillXpMap(xpMap);
 
       try { localStorage.setItem(KEY_RSN, rsn); } catch (e) {}
+      // Levels were set programmatically (no input event), so refresh the sync
+      // indicators explicitly now that the XP map and inputs both reflect the lookup.
+      updateSyncIndicators();
       // Re-render every registered section so their tables/charts pick up new levels.
       for (const id of Object.keys(sections)) {
         try { sections[id].render && sections[id].render(); } catch (e) { console.error(e); }
@@ -530,6 +564,9 @@ window.TO = (function () {
     for (const id of Object.keys(sections)) {
       try { sections[id].init && sections[id].init(); } catch (e) { console.error(e); }
     }
+
+    // Sync indicators after sections have set their stored level values.
+    wireSyncIndicators();
 
     // React to back/forward and to hash typed into the address bar. navigate()
     // records the chosen view (including home) as the last explicit choice.
