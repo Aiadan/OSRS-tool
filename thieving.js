@@ -60,6 +60,17 @@
     };
   }
 
+  // For a method the player can't do yet, project its rates at the level it
+  // unlocks (its `level` req) — where the same rate function reports real
+  // values — so the table shows what it would yield then instead of a flat 0.
+  // `rates.eligible` stays false, so projected rows are never picked as a rec.
+  function unlockProjection(item, forMode, mult, efficiency) {
+    const r = forMode === 'pickpocket'
+      ? pickRates(item, item.level, mult, efficiency)
+      : stallRates(item, item.level, efficiency);
+    return { level: item.level, rates: r };
+  }
+
   function buildRows(forMode, inputs) {
     const mult  = gearMult(inputs.gear);
     const items = forMode === 'pickpocket' ? PICK.targets : STALLS;
@@ -67,16 +78,20 @@
       const r = forMode === 'pickpocket'
         ? pickRates(item, inputs.level, mult, inputs.efficiency)
         : stallRates(item, inputs.level, inputs.efficiency);
+      const projection = !r.eligible
+        ? unlockProjection(item, forMode, mult, inputs.efficiency)
+        : null;
+      const disp = projection ? projection.rates : r;
       return {
-        item, rates: r,
+        item, rates: r, projection,
         sortFields: {
           name: item.name.toLowerCase(),
           level: item.level,
-          successPct: r.successPct,
-          xpPerAction: r.xpPerAction || 0,
+          successPct: disp.successPct,
+          xpPerAction: disp.xpPerAction || 0,
           xpEach: item.xp,
           respawn: item.respawn || 0,
-          xpPerHour: r.xpPerHour
+          xpPerHour: disp.xpPerHour
         }
       };
     });
@@ -90,20 +105,29 @@
 
   // ---- Columns per activity --------------------------------------------
 
+  // XP/h cell: dimmed "(@ lvl N)" suffix when the value is projected at the
+  // method's unlock level rather than the player's current level.
+  function xpHourCell(r, d) {
+    const v = TO.fmt(d.xpPerHour);
+    return r.projection
+      ? `${v} <span class="ot-dim">(@ lvl ${r.projection.level})</span>`
+      : v;
+  }
+
   const COLUMNS = {
     pickpocket: [
       { key: 'name',        label: 'Target' },
-      { key: 'level',       label: 'Lvl',         numeric: true, cell: r => r.item.level },
-      { key: 'successPct',  label: 'Success',     numeric: true, cell: r => TO.fmtPct(r.rates.successPct) },
-      { key: 'xpPerAction', label: 'XP / action', numeric: true, cell: r => TO.fmt(r.rates.xpPerAction, { decimals: 1 }) },
-      { key: 'xpPerHour',   label: 'XP / h',      numeric: true, cell: r => TO.fmt(r.rates.xpPerHour) }
+      { key: 'level',       label: 'Lvl',         numeric: true, cell: (r, d) => r.item.level },
+      { key: 'successPct',  label: 'Success',     numeric: true, cell: (r, d) => TO.fmtPct(d.successPct) },
+      { key: 'xpPerAction', label: 'XP / action', numeric: true, cell: (r, d) => TO.fmt(d.xpPerAction, { decimals: 1 }) },
+      { key: 'xpPerHour',   label: 'XP / h',      numeric: true, cell: (r, d) => xpHourCell(r, d) }
     ],
     stalls: [
       { key: 'name',      label: 'Stall' },
-      { key: 'level',     label: 'Lvl',       numeric: true, cell: r => r.item.level },
-      { key: 'xpEach',    label: 'XP / steal', numeric: true, cell: r => TO.fmt(r.item.xp, { decimals: 1 }) },
-      { key: 'respawn',   label: 'Respawn',   numeric: true, cell: r => r.item.respawn + 's' },
-      { key: 'xpPerHour', label: 'XP / h',    numeric: true, cell: r => TO.fmt(r.rates.xpPerHour) }
+      { key: 'level',     label: 'Lvl',       numeric: true, cell: (r, d) => r.item.level },
+      { key: 'xpEach',    label: 'XP / steal', numeric: true, cell: (r, d) => TO.fmt(r.item.xp, { decimals: 1 }) },
+      { key: 'respawn',   label: 'Respawn',   numeric: true, cell: (r, d) => r.item.respawn + 's' },
+      { key: 'xpPerHour', label: 'XP / h',    numeric: true, cell: (r, d) => xpHourCell(r, d) }
     ]
   };
 
@@ -191,6 +215,13 @@
     const best = bestRow(rows);
     const sorted = rows.slice().sort((a, b) => {
       if (a.rates.eligible !== b.rates.eligible) return a.rates.eligible ? -1 : 1;
+      // Among still-locked methods, the XP/h sort isn't the useful order — the
+      // highest-XP one is usually the highest level away. Order locked rows by
+      // ascending level req instead, so the next methods you'll unlock sit at
+      // the top of the locked block (ties broken by projected XP/h, high first).
+      if (!a.rates.eligible && !b.rates.eligible && sortKey === 'xpPerHour') {
+        return a.item.level - b.item.level || b.sortFields.xpPerHour - a.sortFields.xpPerHour;
+      }
       const c = TO.compareBy(a, b, sortKey);
       return sortDir === 'asc' ? c : -c;
     });
@@ -203,11 +234,15 @@
       if (!row.rates.eligible) tr.classList.add('ineligible');
       if (excluded) tr.classList.add('excluded');
       if (best && row.item.id === best.item.id) tr.classList.add('recommended');
-      tr.title = excluded ? 'Click to include this method again.'
-                          : 'Click to exclude this method from the best-for pick and charts.';
+      const disp = row.projection ? row.projection.rates : row.rates;
+      const titleParts = [];
+      if (row.projection) titleParts.push(`XP/h projected at Thieving ${row.projection.level} (unlock)`);
+      titleParts.push(excluded ? 'Click to include this method again.'
+                               : 'Click to exclude this method from the best-for pick and charts.');
+      tr.title = titleParts.join(' — ');
       tr.innerHTML = cols.map((c, i) => {
         const cls = i === 0 ? 'tree-name' : (c.numeric ? 'numeric' : '');
-        return `<td class="${cls}">${c.cell ? c.cell(row) : row.item.name}</td>`;
+        return `<td class="${cls}">${c.cell ? c.cell(row, disp) : row.item.name}</td>`;
       }).join('');
       tr.addEventListener('click', () => {
         if (excludedIds.has(row.item.id)) excludedIds.delete(row.item.id);
