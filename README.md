@@ -69,7 +69,7 @@ To tighten the numbers, do in-game measurement:
 - Edit one value at a time in `data.js` (the axe's `power`, or the tree's `baseChop` / `ratio`) until predicted ≈ observed.
 - Update `data.js`'s `meta.calibrationStatus` and `lastVerified` when done.
 
-Sources: [Woodcutting](https://oldschool.runescape.wiki/w/Woodcutting), [Fletching](https://oldschool.runescape.wiki/w/Fletching), [Pay-to-play Woodcutting training](https://oldschool.runescape.wiki/w/Pay-to-play_Woodcutting_training).
+**Sources & attribution.** Per-tree Woodcutting/Firemaking XP, Fletching bow XP, level requirements, and the Firemaking ignition curve come from the **individual log/tree pages** (e.g. [Yew logs](https://oldschool.runescape.wiki/w/Yew_logs), [Magic logs](https://oldschool.runescape.wiki/w/Magic_logs), [Redwood logs](https://oldschool.runescape.wiki/w/Redwood_logs)) and the [Woodcutting](https://oldschool.runescape.wiki/w/Woodcutting), [Fletching](https://oldschool.runescape.wiki/w/Fletching), and [Firemaking](https://oldschool.runescape.wiki/w/Firemaking) skill pages on the OSRS Wiki, reused under [CC BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/) (see [LICENSE-DATA.md](LICENSE-DATA.md)). Woodcutting has no official chop-success value, so the chop-rate and axe-power constants are the community-derived approximations documented on the wiki, calibrated further here (see the calibration note above) — they're still wiki-sourced, not from some separate source.
 
 ## Fishing + Cooking
 
@@ -115,6 +115,8 @@ Per-fish constants come directly from the wiki's templates, so the absolute numb
 - **Cascade order** — the calc rolls fish in the order listed in `data.js`'s `spots[].fishIds` (highest-level first). The exact in-engine tie-break order isn't documented; this is the most common community interpretation.
 - **Infernal harpoon auto-cook chance** — the wiki language is "approximately 1 in 3"; we use exactly 1/3.
 
+**Sources & attribution.** Per-fish catch and cook success rates come from the `{{Skilling success chart}}` template on each fish's **individual raw and cooked pages** (e.g. [Raw shark](https://oldschool.runescape.wiki/w/Raw_shark) / [Shark](https://oldschool.runescape.wiki/w/Shark), [Raw monkfish](https://oldschool.runescape.wiki/w/Raw_monkfish), [Raw anglerfish](https://oldschool.runescape.wiki/w/Raw_anglerfish)); fish XP, cook XP, and level requirements from those same pages and the [Fishing](https://oldschool.runescape.wiki/w/Fishing) and [Cooking](https://oldschool.runescape.wiki/w/Cooking) skill pages. Reused under [CC BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/) — see [LICENSE-DATA.md](LICENSE-DATA.md).
+
 ## Thieving
 
 An activity toggle switches between **Pickpocketing** and **Stalls**; both recommendation cards (best pickpocket + best stall) are always shown so you can compare the two at a glance, while the table and charts follow the toggle. Inputs: Thieving level, three gear toggles, and an efficiency factor.
@@ -132,6 +134,8 @@ The three gear toggles — **Gloves of silence (+5%)**, **Thieving cape (+10%)**
 **Locked methods** show a *projected* XP/h at the level they unlock (instead of 0) and are never picked as a recommendation. When the table is sorted by XP/h, locked rows are ordered by **ascending level requirement** (next-to-unlock first) rather than by projected XP/h, since that's the more useful "what's coming up" order.
 
 **Data coverage.** 17 of the 21 listed pickpocket targets have a scrapeable success chart; four (cave goblin, Fremennik citizen, pirate, TzHaar-Hur) have no `{{Skilling success chart}}` on the wiki and are omitted pending hand-authored curves. Stalls (18) are authored with their respawn times.
+
+**Sources & attribution.** Per-target pickpocket success rates come from the `{{Skilling success chart}}` template on each NPC's **individual page** (e.g. [Master Farmer](https://oldschool.runescape.wiki/w/Master_Farmer), [Knight of Ardougne](https://oldschool.runescape.wiki/w/Knight_of_Ardougne), [Elf (Thieving)](https://oldschool.runescape.wiki/w/Elf_(Thieving))); pickpocket XP, level requirements, and stall XP/respawn data from those pages and the [Thieving](https://oldschool.runescape.wiki/w/Thieving) skill page. Reused under [CC BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/) — see [LICENSE-DATA.md](LICENSE-DATA.md).
 
 ## Refreshing the scraped data
 

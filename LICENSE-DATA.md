@@ -14,27 +14,42 @@ same license the wiki applies to its post-2018 content (see
 
 - **`fish-catalog.snippet.js`** — per-fish catch and cook success curves (entirely wiki-scraped).
 - **`thieving-catalog.snippet.js`** — pickpocket-target success curves (entirely wiki-scraped).
-- The **wiki-sourced numeric game constants embedded in `data.js`** — XP values, level
-  requirements, the Firemaking ignition curve, stall respawn times, gear multipliers, etc.
+- The **wiki-sourced numeric game constants embedded in `data.js`** — per-tree/fish XP
+  values, level requirements, the Firemaking ignition curve, stall XP and respawn times,
+  gear multipliers, and the Woodcutting chop-rate / axe-power figures.
 
 The repository's own structure, calculations, layout, and code (in `data.js` and
 the other `.js`/`.css`/`.html`/`.py` files) remain MIT-licensed.
+
+Note: OSRS has no official Woodcutting chop-success rate, so the chop-rate and
+axe-power figures are the community-derived approximations documented on the wiki
+(calibrated further in-repo). They are still wiki-sourced and are treated as data
+under CC BY-NC-SA like the rest, not carved out as MIT.
 
 ## Attribution
 
 > This project uses material from the [Old School RuneScape Wiki](https://oldschool.runescape.wiki)
 > and is licensed under the Creative Commons BY-NC-SA 3.0 license.
 
-The data is drawn from the wiki's `{{Skilling success chart}}` template as embedded
-on the relevant skill and entity pages, in particular:
+The numbers are drawn primarily from the **individual entity pages** — one per
+log/tree, per fish (raw and cooked), and per pickpocket target — with success
+rates coming from the `{{Skilling success chart}}` template embedded on those
+pages. The skill pages below serve as indices to those entity pages:
 
-- [Woodcutting](https://oldschool.runescape.wiki/w/Woodcutting) ·
-  [Fletching](https://oldschool.runescape.wiki/w/Fletching) ·
-  [Firemaking](https://oldschool.runescape.wiki/w/Firemaking)
-- [Fishing](https://oldschool.runescape.wiki/w/Fishing) ·
-  [Cooking](https://oldschool.runescape.wiki/w/Cooking)
-- [Thieving](https://oldschool.runescape.wiki/w/Thieving)
-- and the individual fish, log, and pickpocket-target pages linked from those.
+- **Woodcutting + Fletching + Firemaking** — [Woodcutting](https://oldschool.runescape.wiki/w/Woodcutting),
+  [Fletching](https://oldschool.runescape.wiki/w/Fletching),
+  [Firemaking](https://oldschool.runescape.wiki/w/Firemaking), and each log/tree page
+  (e.g. [Yew logs](https://oldschool.runescape.wiki/w/Yew_logs),
+  [Magic logs](https://oldschool.runescape.wiki/w/Magic_logs)).
+- **Fishing + Cooking** — [Fishing](https://oldschool.runescape.wiki/w/Fishing),
+  [Cooking](https://oldschool.runescape.wiki/w/Cooking), and each fish's raw + cooked
+  pages (e.g. [Raw shark](https://oldschool.runescape.wiki/w/Raw_shark) /
+  [Shark](https://oldschool.runescape.wiki/w/Shark)).
+- **Thieving** — [Thieving](https://oldschool.runescape.wiki/w/Thieving) and each
+  pickpocket-target page (e.g. [Master Farmer](https://oldschool.runescape.wiki/w/Master_Farmer)).
+
+The exact set of pages fetched is enumerated in the source lists at the top of
+`scrape-fish-data.py` and `scrape-thieving-data.py`.
 
 ## Practical consequences
 

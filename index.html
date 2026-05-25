@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=1.1.3" />
+  <link rel="stylesheet" href="styles.css?v=1.1.4" />
 </head>
 <body>
   <main class="container">
@@ -157,10 +157,11 @@
 
       <footer>
         <p>
-          Data sources: <a href="https://oldschool.runescape.wiki/w/Woodcutting" target="_blank" rel="noopener">Woodcutting (wiki)</a> ·
-          <a href="https://oldschool.runescape.wiki/w/Fletching" target="_blank" rel="noopener">Fletching (wiki)</a> ·
-          <a href="https://oldschool.runescape.wiki/w/Firemaking" target="_blank" rel="noopener">Firemaking (wiki)</a>.
-          Edit <code>data.js</code> to calibrate hardwood chop rates.
+          XP and level data from the <a href="https://oldschool.runescape.wiki" target="_blank" rel="noopener">OSRS Wiki</a> — the individual log/tree pages and
+          <a href="https://oldschool.runescape.wiki/w/Woodcutting" target="_blank" rel="noopener">Woodcutting</a> ·
+          <a href="https://oldschool.runescape.wiki/w/Fletching" target="_blank" rel="noopener">Fletching</a> ·
+          <a href="https://oldschool.runescape.wiki/w/Firemaking" target="_blank" rel="noopener">Firemaking</a> —
+          used under <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank" rel="noopener">CC BY-NC-SA 3.0</a>.
         </p>
       </footer>
       </div><!-- /.view-body -->
@@ -278,8 +279,10 @@
 
       <footer>
         <p>
-          Data sources: per-fish wiki pages (<code>Raw_shrimps</code>, <code>Shrimps</code>, etc.) via <code>scrape-fish-data.py</code>.
-          Re-run that script when the wiki updates its <code>{{Skilling success chart}}</code> parameters.
+          Catch/cook rates, XP and levels from the <a href="https://oldschool.runescape.wiki" target="_blank" rel="noopener">OSRS Wiki</a> — each fish's raw and cooked pages (via the <code>{{Skilling success chart}}</code> template) and
+          <a href="https://oldschool.runescape.wiki/w/Fishing" target="_blank" rel="noopener">Fishing</a> ·
+          <a href="https://oldschool.runescape.wiki/w/Cooking" target="_blank" rel="noopener">Cooking</a> —
+          used under <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank" rel="noopener">CC BY-NC-SA 3.0</a>.
         </p>
       </footer>
       </div><!-- /.view-body -->
@@ -331,12 +334,14 @@
           <span class="rec-tree" id="th-rec-pick-name">—</span>
           <span class="rec-xp" id="th-rec-pick-xp">—</span>
           <span class="rec-detail" id="th-rec-pick-detail">Adjust inputs above to see a recommendation.</span>
+          <span class="rec-overtake" id="th-rec-pick-overtake"></span>
         </div>
         <div class="rec-cell">
           <span class="rec-label">Best stall XP/h</span>
           <span class="rec-tree" id="th-rec-stall-name">—</span>
           <span class="rec-xp" id="th-rec-stall-xp">—</span>
           <span class="rec-detail" id="th-rec-stall-detail">Adjust inputs above to see a recommendation.</span>
+          <span class="rec-overtake" id="th-rec-stall-overtake"></span>
         </div>
       </section>
 
@@ -362,6 +367,14 @@
         <p class="hint">Each curve is one method's XP/h across Thieving levels at your current gear. Click a legend entry to toggle it.</p>
       </section>
 
+      <footer>
+        <p>
+          Pickpocket success rates, XP and levels from the <a href="https://oldschool.runescape.wiki" target="_blank" rel="noopener">OSRS Wiki</a> — each target's page (via the <code>{{Skilling success chart}}</code> template) and
+          <a href="https://oldschool.runescape.wiki/w/Thieving" target="_blank" rel="noopener">Thieving</a> —
+          used under <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank" rel="noopener">CC BY-NC-SA 3.0</a>.
+        </p>
+      </footer>
+
       </div><!-- /.view-body -->
       </div><!-- /.view-flex -->
     </section>
@@ -369,13 +382,13 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-  <script src="fish-catalog.snippet.js?v=1.1.3" defer></script>
-  <script src="thieving-catalog.snippet.js?v=1.1.3" defer></script>
-  <script src="data.js?v=1.1.3" defer></script>
-  <script src="core.js?v=1.1.3" defer></script>
-  <script src="wc-fletch-fm.js?v=1.1.3" defer></script>
-  <script src="fish-cook.js?v=1.1.3" defer></script>
-  <script src="thieving.js?v=1.1.3" defer></script>
+  <script src="fish-catalog.snippet.js?v=1.1.4" defer></script>
+  <script src="thieving-catalog.snippet.js?v=1.1.4" defer></script>
+  <script src="data.js?v=1.1.4" defer></script>
+  <script src="core.js?v=1.1.4" defer></script>
+  <script src="wc-fletch-fm.js?v=1.1.4" defer></script>
+  <script src="fish-cook.js?v=1.1.4" defer></script>
+  <script src="thieving.js?v=1.1.4" defer></script>
 
   <!-- GoatCounter — privacy-friendly, cookieless analytics (no consent banner). -->
   <script data-goatcounter="https://osrs-tool.goatcounter.com/count"
