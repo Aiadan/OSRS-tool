@@ -1,4 +1,4 @@
-// Shared utilities for the OSRS Training Optimizer tool.
+// Shared utilities for the OSRS Tool.
 //
 // Exports a single window.TO namespace consumed by wc-fletch-fm.js and
 // fish-cook.js. Owns:
@@ -202,7 +202,14 @@ window.TO = (function () {
     if (fromHash !== 'home') return navigate(fromHash);
     let last = null;
     try { last = localStorage.getItem(KEY_LAST_SECTION); } catch (e) {}
-    if (last && VALID_SECTIONS.has(last)) return navigate(last);
+    if (last && VALID_SECTIONS.has(last)) {
+      // Reflect the restored section in the URL. Otherwise the hash stays at
+      // #/ while a section is shown, and the "All training tools" link
+      // (href="#/") becomes a no-op — clicking it doesn't change the hash, so
+      // no hashchange fires and the home view never loads.
+      try { history.replaceState(null, '', '#/' + last); } catch (e) {}
+      return navigate(last);
+    }
     navigate('home');
   }
 
