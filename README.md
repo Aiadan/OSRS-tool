@@ -162,6 +162,17 @@ Output goes straight to the file the runtime loads; commit the updated snippet. 
 
 Served as static files via **GitHub Pages** (from `main`, repo root; `.nojekyll` present). Asset `<script>`/`<link>` tags carry a `?v=<version>` cache-bust query that's bumped on each release, so returning visitors fetch fresh code without clearing their cache. Cookieless visitor counts come from [GoatCounter](https://www.goatcounter.com/) (`osrs-tool`); no personal data is collected. Releases are tagged `vX.Y.Z` and the displayed version comes from `data.js`'s `meta.version`.
 
+## License & attribution
+
+Dual-licensed:
+
+- **Source code & original content** — [MIT](LICENSE).
+- **Old School RuneScape game data** (`fish-catalog.snippet.js`, `thieving-catalog.snippet.js`, and the wiki-sourced numeric constants in `data.js`) — **CC BY-NC-SA 3.0**, matching the [OSRS Wiki's own license](https://meta.weirdgloop.org/w/Meta:Copyrights). See [`LICENSE-DATA.md`](LICENSE-DATA.md) for the full attribution, source-page links, and consequences.
+
+> This project uses material from the [Old School RuneScape Wiki](https://oldschool.runescape.wiki) and is licensed under the Creative Commons BY-NC-SA 3.0 license.
+
+Practical upshot: because the embedded wiki data is NonCommercial + ShareAlike, **the tool as distributed (code + data) is non-commercial**, and changes to the wiki-derived data must stay under CC BY-NC-SA 3.0 with attribution. The MIT code on its own (with your own data) is unrestricted. _RuneScape_ / _Old School RuneScape_ are trademarks of Jagex Limited; this is an unofficial fan project.
+
 ## Note on WikiSync code
 
 `core.js` includes a complete (but **dormant**) WebSocket client for the [WikiSync](https://github.com/weirdgloop/WikiSync) plugin's local server — the same protocol the wiki's DPS calculator uses. It's not wired to any UI because WikiSync's `GetPlayer` payload currently omits the gathering and processing skills this tool needs (Woodcutting, Fletching, Fishing, Cooking, …).
@@ -184,4 +195,6 @@ The code is kept as a reference implementation for future tools. See the `WikiSy
 | `scrape-fish-data.py`         | One-shot fish scraper. Run when the wiki updates `{{Skilling success chart}}` data. |
 | `scrape-thieving-data.py`     | One-shot thieving scraper (pickpocket success charts). |
 | `favicon.svg`                 | Page icon. |
+| `LICENSE`                     | MIT license for the source code. |
+| `LICENSE-DATA.md`             | CC BY-NC-SA 3.0 license + attribution for the wiki-derived game data. |
 | `README.md`                   | This file. |
