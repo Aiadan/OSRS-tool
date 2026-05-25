@@ -10,18 +10,9 @@ It is built for restricted / limited-resource play (chunk-locked runs, etc.): it
 
 ## Why this exists — prior art & positioning
 
-A survey of comparable OSRS XP tools (web, the wiki, GitHub, RuneLite; conducted May 2026) found the *ingredients* of this tool everywhere but the *combination* nowhere. The plain XP-calculator space is saturated, so this tool deliberately occupies a different corner.
+A survey of comparable OSRS XP tools (web, the wiki, GitHub, RuneLite; conducted May 2026) found the *ingredients* of this tool everywhere but the *combination* nowhere. The plain XP-calculator space — per-skill "actions to a target level" + Grand Exchange profit calculators, real-time XP trackers, EHP rate tables, static written guides, and chunk-locked unlock trackers — is saturated, so this tool deliberately occupies a different corner.
 
-**What already exists:**
-
-- **Per-skill "actions/materials to a target level" + GE profit calculators** — the dominant category: the [OSRS Wiki calculators](https://oldschool.runescape.wiki/w/Calculators), [CalcOSRS](https://calcosrs.com/), [oldschool.tools](https://oldschool.tools/calculators/skill), [osrstools.net](https://www.osrstools.net/tools/skill-calculator), [osrstoolkit.com](https://osrstoolkit.com/calculators/). You enter current + target level, pick one method, and get XP / actions / time-to-goal plus live Grand Exchange profit. Profit- and material-centric; XP/h is a static reference number, not a per-level recommendation.
-- **Manual pairwise efficiency comparison** — the wiki's *Efficiency method comparison calculator* makes you type in two methods' XP/h and cost yourself, for a single skill. No auto-pick, no per-level curve.
-- **Real-time XP trackers** — [RuneLite XP Tracker](https://github.com/runelite/runelite/wiki/XP-Tracker), [Crystal Math Labs](https://crystalmathlabs.com/), [Wise Old Man EHP](https://wiseoldman.net/ehp/main), [TempleOSRS](https://templeosrs.com/). They *measure* your XP/h while you play; they don't recommend a method.
-- **Static written guides** — theoatrix, rpgstash, osrsmoneymaking.guide: prose "best method by level," not interactive.
-- **GitHub** — mostly profit/xp-rate calculators ([Matthew-nop/OSRSCalculator](https://github.com/Matthew-nop/OSRSCalculator), [lukecamelo/osrs-calculator](https://github.com/lukecamelo/osrs-calculator)), single-skill optimal-path tools, and quest/progress planners. None model combined gathering+processing or pick the best XP/h spot per level.
-- **Chunk-locked tooling** ([Chunk Picker](https://source-chunk.github.io/chunk-picker-v2/), Region Locker plugin) tracks *which chunks/unlocks you have* — never which available source gives the best XP/h.
-
-**What this tool does that those don't:**
+**What this tool does that the surveyed tools don't:**
 
 | Feature | Prior art |
 |---|---|
