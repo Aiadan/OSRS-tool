@@ -16,14 +16,15 @@ same license the wiki applies to its post-2018 content (see
 - **`thieving-catalog.snippet.js`** — pickpocket-target success curves (entirely wiki-scraped).
 - The **wiki-sourced numeric game constants embedded in `data.js`** — per-tree/fish XP
   values, level requirements, the Firemaking ignition curve, stall XP and respawn times,
-  gear multipliers, etc.
+  gear multipliers, and the Woodcutting chop-rate / axe-power figures.
 
 The repository's own structure, calculations, layout, and code (in `data.js` and
 the other `.js`/`.css`/`.html`/`.py` files) remain MIT-licensed.
 
-**Not** covered by the data license: the **Woodcutting chop-chance and axe-power
-constants** in `data.js` are community-derived approximations, *not* wiki content, so
-they fall under the MIT code license rather than CC BY-NC-SA.
+Note: OSRS has no official Woodcutting chop-success rate, so the chop-rate and
+axe-power figures are the community-derived approximations documented on the wiki
+(calibrated further in-repo). They are still wiki-sourced and are treated as data
+under CC BY-NC-SA like the rest, not carved out as MIT.
 
 ## Attribution
 
