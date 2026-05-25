@@ -21,6 +21,17 @@
 
 * { box-sizing: border-box; }
 
+/* Always reserve the viewport scrollbar's width. Without this, the page width
+   jumps by the scrollbar's ~15px the moment content height crosses the
+   viewport — and with the 3-up rec cards that 15px straddles the auto-fit
+   column threshold, giving a bistable band where the layout flips 2+1 / 3-up
+   depending on scroll history. `overflow-y: scroll` forces a permanent track
+   (works everywhere); `scrollbar-gutter` is the modern equivalent where honoured. */
+html {
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+
 body {
   margin: 0;
   padding: 2rem 1rem;
@@ -315,13 +326,12 @@ input[type="text"]:focus {
 .rec-overtake .ot-dim { color: var(--text-dim); }
 td .ot-dim { color: var(--text-dim); }
 
-/* The rec-pair card is a CSS grid of best-for cells; the trailing hint
-   paragraph needs to span every column so it doesn't get jammed into a
-   single cell next to the last rec-cell. */
-.rec-pair .rec-overtake-hint {
-  grid-column: 1 / -1;
-  margin: 0;
-  padding-top: 0.25rem;
+/* The hint sits below the .rec-pair grid (a sibling, not a grid item) so it
+   doesn't add a phantom column that defeats auto-fit's empty-track collapsing
+   — that's what left dead space beside the cells at wide widths. */
+.rec-card .rec-overtake-hint {
+  margin: 1rem 0 0;
+  padding-top: 0.75rem;
   border-top: 1px solid var(--border);
 }
 
@@ -793,9 +803,17 @@ input[type="checkbox"] {
   thead th { padding: 0.5rem 0.45rem; font-size: 0.68rem; }
   tbody td { padding: 0.45rem 0.45rem; }
   table { font-size: 0.85rem; }
-  /* The Tracking rail's ~150px column leaves a near-empty left gutter and
-     starves the already-wide table once space is tight. Hide it here and rely
-     on the clickable column headers, which sort by the same XP/h metrics. */
+}
+
+/* The Tracking rail's ~150px column narrows .view-body. Below ~1137px there's
+   no longer room for it AND a 3-up rec layout, so the rec cards would drop to
+   2+1 while the rail is still shown — then jump back to 3-up the instant the
+   rail is hidden, and collapse again as you keep narrowing (the reported
+   3 -> 2+1 -> 3 -> 2+1 -> 1 bounce). Hiding the rail at 1150px, with margin,
+   means the rail only appears when 3-up fits beside it, so the rec grid
+   reflows monotonically. The clickable column headers sort by the same metrics
+   once the rail is gone. */
+@media (max-width: 1150px) {
   .mode-rail { display: none; }
 }
 
