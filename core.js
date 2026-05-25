@@ -177,9 +177,12 @@ window.TO = (function () {
   function navigate(id) {
     if (id !== 'home' && !VALID_SECTIONS.has(id)) id = 'home';
     setVisibleView(id);
-    if (id !== 'home') {
-      try { localStorage.setItem(KEY_LAST_SECTION, id); } catch (e) {}
-    }
+    // Remember the last explicitly-shown view — including 'home'. Going to the
+    // index is itself a choice, so a later bare-URL load restores the index
+    // rather than jumping back into a section the user already navigated away
+    // from. (Key name kept for back-compat; it now holds a view, not just a
+    // section. 'home' isn't a VALID_SECTION, so restore falls through to index.)
+    try { localStorage.setItem(KEY_LAST_SECTION, id); } catch (e) {}
     const homeLink = document.getElementById('home-link');
     if (homeLink) homeLink.style.visibility = (id === 'home') ? 'hidden' : 'visible';
   }
@@ -200,6 +203,11 @@ window.TO = (function () {
   function restoreInitialView() {
     const fromHash = parseHash();
     if (fromHash !== 'home') return navigate(fromHash);
+    // fromHash is 'home'. An explicit home hash (#/, #, #/home) means the user
+    // deliberately went to the index — e.g. clicked "All training tools" — so
+    // stay there on refresh. Only a bare URL with no hash at all (a fresh open
+    // or a bookmark of the root) restores the last-viewed section.
+    if ((window.location.hash || '').length > 0) return navigate('home');
     let last = null;
     try { last = localStorage.getItem(KEY_LAST_SECTION); } catch (e) {}
     if (last && VALID_SECTIONS.has(last)) {
@@ -523,19 +531,9 @@ window.TO = (function () {
       try { sections[id].init && sections[id].init(); } catch (e) { console.error(e); }
     }
 
-    // React to back/forward and to hash typed into the address bar.
-    window.addEventListener('hashchange', () => {
-      const view = parseHash();
-      if (view === 'home') {
-        // user navigated to startpage explicitly — show it but don't clear
-        // last-section, so a refresh still drops them back into the last view.
-        setVisibleView('home');
-        const homeLink = document.getElementById('home-link');
-        if (homeLink) homeLink.style.visibility = 'hidden';
-      } else {
-        navigate(view);
-      }
-    });
+    // React to back/forward and to hash typed into the address bar. navigate()
+    // records the chosen view (including home) as the last explicit choice.
+    window.addEventListener('hashchange', () => navigate(parseHash()));
 
     restoreInitialView();
   }
