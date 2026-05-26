@@ -17,7 +17,7 @@ window.TO = (function () {
   const KEY_RSN          = 'training-optimizer:rsn';
   const KEY_SKILL_XP     = 'training-optimizer:skill-xp';
   const KEY_LEGACY_V1    = 'training-optimizer:v1';   // pre-multisection storage
-  const VALID_SECTIONS   = new Set(['wc-fletch-fm', 'fish-cook', 'thieving']);
+  const VALID_SECTIONS   = new Set(['wc-fletch-fm', 'fish-cook', 'thieving', 'mine-smith']);
 
   // ---- OSRS XP table ----------------------------------------------------
   // Standard cumulative-XP table: XP_TABLE[L] = experience required to reach
@@ -245,7 +245,9 @@ window.TO = (function () {
     'fm-level':      { idx: 12, label: 'Firemaking' },
     'fc-fish-level': { idx: 11, label: 'Fishing' },
     'fc-cook-level': { idx: 8,  label: 'Cooking' },
-    'th-level':      { idx: 18, label: 'Thieving' }
+    'th-level':      { idx: 18, label: 'Thieving' },
+    'ms-mining-level':   { idx: 15, label: 'Mining' },
+    'ms-smithing-level': { idx: 14, label: 'Smithing' }
   };
 
   // Stamp the page with the version from TRAINING_DATA.meta (single source).
