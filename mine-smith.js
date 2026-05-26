@@ -139,5 +139,83 @@
     };
   }
 
+  // ---- State + inputs ----
+  function loadState() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch (e) { return null; } }
+  function saveState(s) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        ...s, sortKey, sortDir, activity,
+        excludedRockIds: Array.from(excludedRockIds),
+        excludedBarIds: Array.from(excludedBarIds),
+        rockCounts
+      }));
+    } catch (e) {}
+  }
+  function readInputs() {
+    return {
+      miningLevel:   TO.clampInt('ms-mining-level', 1, 99),
+      smithingLevel: TO.clampInt('ms-smithing-level', 1, 99),
+      pickId:        document.getElementById('ms-pick-select').value,
+      ringOfForging: document.getElementById('ms-ring').checked,
+      efficiency:    TO.clampFloat('ms-efficiency', 0.5, 1)
+    };
+  }
+  function buildPickOptions(miningLevel) {
+    const sel = document.getElementById('ms-pick-select'); const prev = sel.value; sel.innerHTML = '';
+    for (const p of PICKS) {
+      const opt = document.createElement('option'); opt.value = p.id;
+      opt.textContent = (miningLevel < p.reqLevel) ? `${p.name} (req. Mining ${p.reqLevel})` : p.name;
+      sel.appendChild(opt);
+    }
+    if (prev && PICKS.some(p => p.id === prev)) sel.value = prev;
+  }
+
+  // ---- Row builders ----
+  function buildRockRows(inputs) {
+    return ROCKS.map(rock => {
+      const rates = rockRate({ miningLevel: inputs.miningLevel, pickId: inputs.pickId, rock, efficiency: inputs.efficiency });
+      let projection = null;
+      if (!rates.eligible) {
+        const r2 = rockRate({ miningLevel: rock.gatherLevel, pickId: inputs.pickId, rock, efficiency: inputs.efficiency });
+        if (r2.miningXpPerHour > 0) projection = { rates: r2, miningLevel: rock.gatherLevel };
+      }
+      const disp = projection ? projection.rates : rates;
+      return { rock, rates, projection, sortFields: {
+        name: rock.name.toLowerCase(), gatherLevel: rock.gatherLevel,
+        successChance: disp.successChance, count: disp.count,
+        oresPerHour: disp.oresPerHour, miningXpPerHour: disp.miningXpPerHour } };
+    });
+  }
+  function buildBarRows(inputs) {
+    return BARS.map(bar => {
+      const rates = barRate({ miningLevel: inputs.miningLevel, smithingLevel: inputs.smithingLevel,
+        pickId: inputs.pickId, bar, ringOfForging: inputs.ringOfForging, efficiency: inputs.efficiency });
+      let projection = null;
+      if (!rates.eligible) {
+        const oreRocks = Object.keys(bar.recipe).map(o => ROCK_BY_ID[o]);
+        if (oreRocks.every(Boolean)) {
+          const mlvl = Math.max(...oreRocks.map(r => r.gatherLevel));
+          const slvl = Math.max(bar.smeltLevel, bar.smithLevel);
+          const r2 = barRate({ miningLevel: mlvl, smithingLevel: slvl, pickId: inputs.pickId, bar,
+            ringOfForging: inputs.ringOfForging, efficiency: inputs.efficiency });
+          if (r2.totalXpPerHour > 0) projection = { rates: r2, miningLevel: mlvl, smithingLevel: slvl };
+        }
+      }
+      const disp = projection ? projection.rates : rates;
+      return { bar, rates, projection, sortFields: {
+        name: bar.name.toLowerCase(), smithLevel: bar.smithLevel,
+        smithingXpPerBar: disp.smithingXpPerBar,
+        smithingXpPerHour: disp.smithingXpPerHour, totalXpPerHour: disp.totalXpPerHour } };
+    });
+  }
+  function bestRockByKey(rows, key) {
+    const e = rows.filter(r => r.rates.eligible && !excludedRockIds.has(r.rock.id));
+    return e.length ? e.reduce((b, c) => c.rates[key] > b.rates[key] ? c : b) : null;
+  }
+  function bestBarByKey(rows, key) {
+    const e = rows.filter(r => r.rates.eligible && !excludedBarIds.has(r.bar.id));
+    return e.length ? e.reduce((b, c) => c.rates[key] > b.rates[key] ? c : b) : null;
+  }
+
   TO.registerSection('mine-smith', { init: () => {}, render: () => {} });
 })();
