@@ -217,5 +217,88 @@
     return e.length ? e.reduce((b, c) => c.rates[key] > b.rates[key] ? c : b) : null;
   }
 
+  // ---- Recommendation cards ----
+  function writeMiningRec(best, inputs) {
+    const t = document.getElementById('ms-rec-mining-title');
+    const xp = document.getElementById('ms-rec-mining-xp');
+    const d = document.getElementById('ms-rec-mining-detail');
+    if (!best) { t.textContent = 'No eligible rock'; xp.textContent = '—'; d.textContent = `At Mining ${inputs.miningLevel}, nothing is unlocked. Clay/copper/tin are available from level 1.`; return; }
+    const r = best.rates;
+    t.textContent = best.rock.name;
+    xp.textContent = `${TO.fmt(r.miningXpPerHour)} Mining XP/h`;
+    d.textContent = `${r.pickName} at Mining ${inputs.miningLevel} · ${TO.fmtPct(r.successChance)} success · ${TO.fmt(r.oresPerHour)} ore/h · assumes ${r.count} rock${r.count === 1 ? '' : 's'}`;
+  }
+  function writeBarRec(prefix, best, inputs, key, label) {
+    const t = document.getElementById(`ms-rec-${prefix}-title`);
+    const xp = document.getElementById(`ms-rec-${prefix}-xp`);
+    const d = document.getElementById(`ms-rec-${prefix}-detail`);
+    if (!best) { t.textContent = 'No eligible bar'; xp.textContent = '—'; d.textContent = `At Mining ${inputs.miningLevel} / Smithing ${inputs.smithingLevel}, no bar chain is unlocked yet.`; return; }
+    const r = best.rates;
+    t.textContent = `${best.bar.name} — ${r.recipeLabel}`;
+    xp.textContent = `${TO.fmt(r[key])} ${label}`;
+    d.textContent = `${r.smithingXpPerBar} Smithing XP/bar · gather bound by ${r.bindingOre} · ${TO.fmtTime(r.cycleSec)}/bar · ${TO.fmt(r.totalXpPerHour)} total XP/h`;
+  }
+  function renderRecommendation(rockRows, barRows, inputs) {
+    const miningBest   = bestRockByKey(rockRows, 'miningXpPerHour');
+    const smithingBest = bestBarByKey(barRows, 'smithingXpPerHour');
+    const totalBest    = bestBarByKey(barRows, 'totalXpPerHour');
+    writeMiningRec(miningBest, inputs);
+    writeBarRec('smithing', smithingBest, inputs, 'smithingXpPerHour', 'Smithing XP/h');
+    writeBarRec('total',    totalBest,    inputs, 'totalXpPerHour',    'Total XP/h');
+    writeMiningOvertake(miningBest, inputs);
+    writeBarOvertake('smithing', smithingBest, inputs, 'smithingXpPerHour');
+    writeBarOvertake('total',    totalBest,    inputs, 'totalXpPerHour');
+  }
+
+  // ---- Overtake projections ----
+  // Mining card: sweep Mining level, holding rock counts; first level a different
+  // rock becomes best by Mining XP/h. Bar cards: sweep Mining (raising Smithing in
+  // lockstep) holding counts; first level a different bar becomes best by `key`.
+  function writeMiningOvertake(best, inputs) {
+    const el = document.getElementById('ms-rec-mining-overtake'); if (!el) return;
+    if (!best) { el.innerHTML = ''; return; }
+    if (inputs.miningLevel >= 99) { el.innerHTML = `<span class="ot-dim">Already at Mining 99 — nothing left to overtake.</span>`; return; }
+    const curXp = TO.getSkillXp('ms-mining-level');
+    const xpPerHour = best.rates.miningXpPerHour, xpPerOre = best.rock.gatherXp;
+    if (!(xpPerHour > 0) || !(xpPerOre > 0)) { el.innerHTML = ''; return; }
+    let found = null;
+    for (let L = inputs.miningLevel + 1; L <= 99 && !found; L++) {
+      const rows = ROCKS.map(rock => ({ rock, rates: rockRate({ miningLevel: L, pickId: inputs.pickId, rock, efficiency: inputs.efficiency }) }));
+      const b = bestRockByKey(rows, 'miningXpPerHour');
+      if (b && b.rock.id !== best.rock.id) found = { level: L, b };
+    }
+    if (!found) {
+      const xpTo99 = Math.max(0, TO.xpAt(99) - curXp);
+      el.innerHTML = `Best rock through <strong>lvl 99</strong> — ${TO.fmt(Math.ceil(xpTo99 / xpPerOre))} more ${best.rock.name} <span class="ot-dim">(≈${TO.fmtDuration(xpTo99 / xpPerHour)})</span>`;
+      return;
+    }
+    const need = Math.max(0, TO.xpAt(found.level) - curXp);
+    el.innerHTML = `Overtaken by <strong>${found.b.rock.name}</strong> at lvl ${found.level} — ${TO.fmt(Math.ceil(need / xpPerOre))} more ${best.rock.name} <span class="ot-dim">(≈${TO.fmtDuration(need / xpPerHour)})</span>`;
+  }
+  function writeBarOvertake(prefix, best, inputs, key) {
+    const el = document.getElementById(`ms-rec-${prefix}-overtake`); if (!el) return;
+    if (!best) { el.innerHTML = ''; return; }
+    if (inputs.miningLevel >= 99 && inputs.smithingLevel >= 99) { el.innerHTML = `<span class="ot-dim">Already at Mining &amp; Smithing 99.</span>`; return; }
+    const curXp = TO.getSkillXp('ms-mining-level');
+    const xpPerHour = best.rates[key];
+    const barsPerHour = best.rates.cycleSec > 0 ? 3600 * inputs.efficiency / best.rates.cycleSec : 0;
+    const xpPerBar = barsPerHour > 0 ? xpPerHour / barsPerHour : 0;
+    if (!(xpPerHour > 0) || !xpPerBar) { el.innerHTML = ''; return; }
+    let found = null;
+    for (let L = inputs.miningLevel + 1; L <= 99 && !found; L++) {
+      const sL = Math.min(99, inputs.smithingLevel + (L - inputs.miningLevel));
+      const rows = BARS.map(bar => ({ bar, rates: barRate({ miningLevel: L, smithingLevel: sL, pickId: inputs.pickId, bar, ringOfForging: inputs.ringOfForging, efficiency: inputs.efficiency }) }));
+      const b = bestBarByKey(rows, key);
+      if (b && b.bar.id !== best.bar.id) found = { level: L, b };
+    }
+    if (!found) {
+      const xpTo99 = Math.max(0, TO.xpAt(99) - curXp);
+      el.innerHTML = `Best bar through <strong>Mining 99</strong> — ${TO.fmt(Math.ceil(xpTo99 / xpPerBar))} more ${best.bar.name} <span class="ot-dim">(≈${TO.fmtDuration(xpTo99 / xpPerHour)}, counts held)</span>`;
+      return;
+    }
+    const need = Math.max(0, TO.xpAt(found.level) - curXp);
+    el.innerHTML = `Overtaken by <strong>${found.b.bar.name}</strong> at Mining ${found.level} — ${TO.fmt(Math.ceil(need / xpPerBar))} more ${best.bar.name} <span class="ot-dim">(≈${TO.fmtDuration(need / xpPerHour)}, counts held)</span>`;
+  }
+
   TO.registerSection('mine-smith', { init: () => {}, render: () => {} });
 })();
