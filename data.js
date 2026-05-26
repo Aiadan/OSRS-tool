@@ -240,6 +240,49 @@ window.TRAINING_DATA = {
         // each stall's respawn time (xp / respawn).
         entries: (window.TRAINING_DATA_THIEVING && window.TRAINING_DATA_THIEVING.stalls) || []
       }
+    },
+
+    // ----------------------------------------------------------------------
+    'mine-smith': {
+      label: 'Mining + Smithing',
+      blurb: 'Best rock to mine, bar to smith, or combined Mining+Smithing XP/h.',
+      gather: {
+        skillLabel: 'Mining', hiscoresIndex: 15, tickSec: 0.6,
+        toolLabel: 'Pickaxe',
+        tools: [
+          { id: 'bronze',  name: 'Bronze',  reqLevel: 1,  rollTicks: 8 },
+          { id: 'iron',    name: 'Iron',    reqLevel: 1,  rollTicks: 7 },
+          { id: 'steel',   name: 'Steel',   reqLevel: 6,  rollTicks: 6 },
+          { id: 'black',   name: 'Black',   reqLevel: 11, rollTicks: 5 },
+          { id: 'mithril', name: 'Mithril', reqLevel: 21, rollTicks: 5 },
+          { id: 'adamant', name: 'Adamant', reqLevel: 31, rollTicks: 4 },
+          { id: 'rune',    name: 'Rune',    reqLevel: 41, rollTicks: 3 },
+          { id: 'dragon',  name: 'Dragon',  reqLevel: 61, rollTicks: 2.83 },
+          { id: 'crystal', name: 'Crystal', reqLevel: 71, rollTicks: 2.75 }
+        ],
+        // Per-rock success curves (low/high/req) scraped from each rock page's
+        // {{Skilling success chart}} -> mining-catalog.snippet.js, plumbed in
+        // like fishCatalog. Each entry: { id, name, gatherLevel, gatherXp, low,
+        // high, respawnSec, color }.
+        miningCatalog: window.TRAINING_DATA_MINING_CATALOG || []
+      },
+      process: {
+        // Smithing is deterministic (no success chart): bars hand-authored.
+        // Each bar is the self-gathered chain smelt(ore->bar) + smith(bar->item);
+        // smithingXp/bar = smeltXp + smithXp. Iron bar smelts at 50% without a
+        // Ring of forging (failed smelt consumes the ore).
+        skillLabel: 'Smithing', hiscoresIndex: 14,
+        furnaceActionSec: 2.4, anvilActionSec: 1.8,
+        ringOfForging: { affects: ['iron'], smeltSuccessWithout: 0.5, smeltSuccessWith: 1.0 },
+        bars: [
+          { id: 'bronze',  name: 'Bronze bar',  recipe: { copper: 1, tin: 1 },      smeltLevel: 1,  smeltXp: 6.2,  smithLevel: 1,  smithXp: 12.5 },
+          { id: 'iron',    name: 'Iron bar',    recipe: { iron: 1 },                 smeltLevel: 15, smeltXp: 12.5, smithLevel: 15, smithXp: 25   },
+          { id: 'steel',   name: 'Steel bar',   recipe: { iron: 1, coal: 2 },        smeltLevel: 30, smeltXp: 17.5, smithLevel: 30, smithXp: 37.5 },
+          { id: 'mithril', name: 'Mithril bar', recipe: { mithril: 1, coal: 4 },     smeltLevel: 50, smeltXp: 30,   smithLevel: 50, smithXp: 50   },
+          { id: 'adamant', name: 'Adamant bar', recipe: { adamantite: 1, coal: 6 },  smeltLevel: 70, smeltXp: 37.5, smithLevel: 70, smithXp: 62.5 },
+          { id: 'rune',    name: 'Runite bar',  recipe: { runite: 1, coal: 8 },      smeltLevel: 85, smeltXp: 50,   smithLevel: 85, smithXp: 75   }
+        ]
+      }
     }
   }
 };
