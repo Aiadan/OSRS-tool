@@ -827,6 +827,17 @@ input[type="checkbox"] {
   font-weight: 600;
 }
 
+/* ---- Mining rock-count input --------------------------------------- */
+
+/* Compact number input for the per-row "Rocks available" column in the
+   mining table. Inherits the global input[type=number] colours/border so
+   it stays consistent with the dark theme; width is just kept tight. */
+.rock-count {
+  width: 4.5em;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.84rem;
+}
+
 /* ---- Thieving activity toggle (Pickpocketing / Stalls) ------------- */
 .th-activity {
   display: flex;

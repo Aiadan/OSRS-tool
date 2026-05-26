@@ -14,9 +14,11 @@ same license the wiki applies to its post-2018 content (see
 
 - **`fish-catalog.snippet.js`** — per-fish catch and cook success curves (entirely wiki-scraped).
 - **`thieving-catalog.snippet.js`** — pickpocket-target success curves (entirely wiki-scraped).
-- The **wiki-sourced numeric game constants embedded in `data.js`** — per-tree/fish XP
+- **`mining-catalog.snippet.js`** — per-rock Mining success curves (entirely wiki-scraped).
+- The **wiki-sourced numeric game constants embedded in `data.js`** — per-tree/fish/rock XP
   values, level requirements, the Firemaking ignition curve, stall XP and respawn times,
-  gear multipliers, and the Woodcutting chop-rate / axe-power figures.
+  gear multipliers, the Woodcutting chop-rate / axe-power figures, pickaxe roll-ticks,
+  rock respawn timers, and smelt/smith XP values.
 
 The repository's own structure, calculations, layout, and code (in `data.js` and
 the other `.js`/`.css`/`.html`/`.py` files) remain MIT-licensed.
@@ -47,9 +49,15 @@ pages. The skill pages below serve as indices to those entity pages:
   [Shark](https://oldschool.runescape.wiki/w/Shark)).
 - **Thieving** — [Thieving](https://oldschool.runescape.wiki/w/Thieving) and each
   pickpocket-target page (e.g. [Master Farmer](https://oldschool.runescape.wiki/w/Master_Farmer)).
+- **Mining + Smithing** — [Mining](https://oldschool.runescape.wiki/w/Mining),
+  [Smithing](https://oldschool.runescape.wiki/w/Smithing), each individual rock page
+  (e.g. [Iron rocks](https://oldschool.runescape.wiki/w/Iron_rocks),
+  [Coal rocks](https://oldschool.runescape.wiki/w/Coal_rocks),
+  [Runite rocks](https://oldschool.runescape.wiki/w/Runite_rocks)) for Mining success
+  curves via `{{Skilling success chart}}`, and per-bar smelting/smithing pages for XP values.
 
 The exact set of pages fetched is enumerated in the source lists at the top of
-`scrape-fish-data.py` and `scrape-thieving-data.py`.
+`scrape-fish-data.py`, `scrape-thieving-data.py`, and `scrape-mining-data.py`.
 
 ## Practical consequences
 

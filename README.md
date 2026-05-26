@@ -1,10 +1,11 @@
 # OSRS Tool
 
-A standalone single-page tool that answers "what should I be doing right now to maximise XP/hour in this activity?" for OSRS. Open `index.html` in any modern browser — no build step, no install; Chart.js loads from a CDN. A version stamp (read from `data.js`'s `meta.version`) shows next to the title. Three scenarios:
+A standalone single-page tool that answers "what should I be doing right now to maximise XP/hour in this activity?" for OSRS. Open `index.html` in any modern browser — no build step, no install; Chart.js loads from a CDN. A version stamp (read from `data.js`'s `meta.version`) shows next to the title. Four scenarios:
 
 - **Woodcutting + Fletching + Firemaking** — best tree for WC, Fletching, or Firemaking XP/h across 16 trees, all hardwoods included (Achey, Teak, Mahogany, Arctic pine, Blisterwood, Jatoba, Camphor, Ironwood, Redwood, Rosewood). Three recommendations side-by-side.
 - **Fishing + Cooking** — best fishing spot for **Fishing**, **Cooking**, or combined **Total** XP/h (three recommendations side-by-side).
 - **Thieving** — best pickpocket target or stall for Thieving XP/h, switched by an activity toggle.
+- **Mining + Smithing** — best rock to mine, bar to smith, or combined Mining + Smithing XP/h, with per-rock availability (respawn bottlenecking) modelled.
 
 It is built for restricted / limited-resource play (chunk-locked runs, etc.): it ranks purely by XP/h with no Grand Exchange / profit angle, and lets you deselect training sources you can't access. See the next section for how that compares to existing tools.
 
@@ -28,13 +29,13 @@ A survey of comparable OSRS XP tools (web, the wiki, GitHub, RuneLite; conducted
 
 ## Navigating between sections
 
-On first open, the **startpage** (`#/`) shows the three scenarios as cards. Click one to enter; the URL hash updates. Your last *explicit* view — a section **or** the startpage — is remembered in `localStorage` (`training-optimizer:last-section`). Opening the bare/root URL (or a bookmark of it) restores that last explicit view, so a returning player drops straight back into the section they were using; but if the last thing you did was deliberately go to the index, the index is what you get. Refreshing while you're on the index (`#/`) keeps you on the index. The "← All training tools" link in the top toolbar returns to the startpage and records that as your latest choice.
+On first open, the **startpage** (`#/`) shows the four scenarios as cards. Click one to enter; the URL hash updates. Your last *explicit* view — a section **or** the startpage — is remembered in `localStorage` (`training-optimizer:last-section`). Opening the bare/root URL (or a bookmark of it) restores that last explicit view, so a returning player drops straight back into the section they were using; but if the last thing you did was deliberately go to the index, the index is what you get. Refreshing while you're on the index (`#/`) keeps you on the index. The "← All training tools" link in the top toolbar returns to the startpage and records that as your latest choice.
 
-You can also deep-link by typing the hash directly: `#/wc-fletch-fm`, `#/fish-cook`, or `#/thieving`.
+You can also deep-link by typing the hash directly: `#/wc-fletch-fm`, `#/fish-cook`, `#/thieving`, or `#/mine-smith`.
 
 ## Shared RSN import
 
-The **RSN** field in the top toolbar appears on every view. Type your in-game name and click **Lookup hiscores** — the tool fetches your levels for all six relevant skills (Woodcutting, Fletching, Firemaking, Fishing, Cooking, Thieving) in one request and updates whichever section's inputs match. The RSN is saved in `localStorage`.
+The **RSN** field in the top toolbar appears on every view. Type your in-game name and click **Lookup hiscores** — the tool fetches your levels for all eight relevant skills (Woodcutting, Fletching, Firemaking, Fishing, Cooking, Thieving, Mining, Smithing) in one request and updates whichever section's inputs match. The RSN is saved in `localStorage`.
 
 Behind the scenes the tool hits `https://oldschool.runescape.wiki/cors/m=hiscore_oldschool/index_lite.ws?player=<RSN>`, the same CORS-permissive proxy the wiki's own calculators use. Response is plain text, one line per skill (`rank,level,xp`). Hiscores only update when you log out, so the level can lag real-time play by a few minutes.
 
@@ -128,6 +129,20 @@ The three gear toggles — **Gloves of silence (+5%)**, **Thieving cape (+10%)**
 
 **Sources & attribution.** Per-target pickpocket success rates come from the `{{Skilling success chart}}` template on each NPC's **individual page** (e.g. [Master Farmer](https://oldschool.runescape.wiki/w/Master_Farmer), [Knight of Ardougne](https://oldschool.runescape.wiki/w/Knight_of_Ardougne), [Elf (Thieving)](https://oldschool.runescape.wiki/w/Elf_(Thieving))); pickpocket XP, level requirements, and stall XP/respawn data from those pages and the [Thieving](https://oldschool.runescape.wiki/w/Thieving) skill page. Reused under [CC BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/) — see [LICENSE-DATA.md](LICENSE-DATA.md).
 
+## Mining + Smithing
+
+Pick your Mining and Smithing levels, pickaxe tier, Ring of forging toggle, and efficiency. Three recommendation cards highlight the best rock for **Mining XP/h**, the best bar for **Smithing XP/h**, and the best bar for **Total XP/h** (Mining + Smithing combined). An activity toggle in the rail switches the table and charts between the Mining view (per-rock breakdown) and the Smithing view (per-bar breakdown).
+
+**Rocks available — respawn bottleneck model.** Each rock row has a "Rocks avail." count input. The model caps ore/h at the lower of two limits: the roll-limited rate (how fast you can mine given your level and pickaxe) and the respawn-supply rate (how fast rocks respawn given how many are in reach). Mathematically: `ore/h = min(roll_rate, rocks_available × 3600 / respawn_sec)`. The default count for each rock is the number that makes the rock roll-limited at your level — i.e. you'll never be sitting idle waiting for a respawn. Lower the count to model a chunk-locked area with fewer accessible rocks; the rate will drop once respawn supply becomes the constraint.
+
+**Smithing chain — self-gathered ores.** The Smithing and Total cards assume you mine all required ores yourself. The achievable smithing rate is therefore throttled by how fast you can gather the constituent ores; for steel and higher bars, coal is usually the binding constraint (steel needs 2 coal per iron, mithril needs 4 coal per mithril ore, etc.). Smithing XP per bar = smelt XP + smith XP (smith item XP per bar consumed). The Total XP/h card combines Mining XP earned gathering the ores with that full Smithing XP chain.
+
+**Ring of forging toggle.** Without the Ring of forging, iron bars smelt at 50% success (a failed smelt still consumes the ore but grants no bar). Enabling the toggle raises iron smelting to 100%. The toggle only affects the iron-bar row.
+
+**Calibration note.** Mining success curves (per-rock `low`/`high`/`req` from `{{Skilling success chart}}`), pickaxe roll-ticks, rock respawn timers, and all smelt/smith XP values are scraped or read directly from the wiki and are authoritative. Furnace and anvil action cycle times (used to cap the smithing throughput side) and the rock-cycling respawn abstraction are approximations.
+
+**Sources & attribution.** Per-rock Mining success rates come from each rock's individual wiki page (e.g. [Iron rocks](https://oldschool.runescape.wiki/w/Iron_rocks), [Coal rocks](https://oldschool.runescape.wiki/w/Coal_rocks), [Runite rocks](https://oldschool.runescape.wiki/w/Runite_rocks)) via the `{{Skilling success chart}}` template, plus the [Mining](https://oldschool.runescape.wiki/w/Mining) and [Smithing](https://oldschool.runescape.wiki/w/Smithing) skill pages and individual bar/smelting pages. Reused under [CC BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/) — see [LICENSE-DATA.md](LICENSE-DATA.md).
+
 ## Refreshing the scraped data
 
 If the wiki updates its `{{Skilling success chart}}` parameters, re-run the relevant scraper (Python 3.10+):
@@ -135,6 +150,7 @@ If the wiki updates its `{{Skilling success chart}}` parameters, re-run the rele
 ```
 python scrape-fish-data.py     > fish-catalog.snippet.js
 python scrape-thieving-data.py > thieving-catalog.snippet.js
+python scrape-mining-data.py   > mining-catalog.snippet.js
 ```
 
 Output goes straight to the file the runtime loads; commit the updated snippet. The scripts fetch each entity's wiki page, parse out the per-series `low`/`high`/`req` parameters, and emit a JS object literal, printing a per-entity summary to stderr (any unknown series labels are logged so you know whether to extend the label maps).
@@ -146,7 +162,7 @@ Output goes straight to the file the runtime loads; commit the updated snippet. 
 **No automated tests.** Verification is manual:
 
 - **Routing.** Open the page cold (clear `localStorage`) → startpage. Click a section → URL hash updates, section loads. Refresh → lands back on the same section. Click the home link → startpage; refresh → *stays* on the startpage (the index is now a remembered choice). Open the bare URL after using a section → drops back into that section.
-- **Hiscores import.** Enter a known RSN → all six level inputs populate, each showing the green in-sync ✓. Edit one by hand → its ✓ drops. Switch sections → tables/charts reflect new levels.
+- **Hiscores import.** Enter a known RSN → all eight level inputs populate, each showing the green in-sync ✓. Edit one by hand → its ✓ drops. Switch sections → tables/charts reflect new levels.
 - **WC-fletch numeric:** the calibration scenarios in the section above.
 - **Fish-cook numeric:** at Fishing 14 / Net (coastal), only Shrimp listed (anchovy not yet unlocked) and the per-tick rate matches the wiki's shrimp value at level 14. At Fishing 30 same spot, Shrimp + Anchovy combine per the cascade `1 − (1 − p_shrimp)(1 − p_anchovy)`. At Fishing 60 / Cooking 20 the Fishing-, Cooking-, and Total-best cards show three different spots.
 - **Thieving numeric:** Master Farmer success ≈ 64.8% at level 50; enabling all three gear toggles raises every target's success/XP. Locked targets show a dimmed projected XP/h and sort by ascending level under the XP/h sort.
@@ -189,6 +205,9 @@ The code is kept as a reference implementation for future tools. See the `WikiSy
 | `styles.css`                  | Dark OSRS-inspired theme, startpage cards, toolbar, rec cards, table + chart styling. |
 | `scrape-fish-data.py`         | One-shot fish scraper. Run when the wiki updates `{{Skilling success chart}}` data. |
 | `scrape-thieving-data.py`     | One-shot thieving scraper (pickpocket success charts). |
+| `scrape-mining-data.py`       | One-shot mining scraper (per-rock success charts). |
+| `mining-catalog.snippet.js`   | Auto-generated per-rock data scraped from the wiki. Do not hand-edit. |
+| `mine-smith.js`               | Mining + Smithing section: calc engine, tables, activity toggle, charts. |
 | `favicon.svg`                 | Page icon. |
 | `LICENSE`                     | MIT license for the source code. |
 | `LICENSE-DATA.md`             | CC BY-NC-SA 3.0 license + attribution for the wiki-derived game data. |
