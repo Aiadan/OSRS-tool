@@ -248,6 +248,9 @@ window.TRAINING_DATA = {
       blurb: 'Best rock to mine, bar to smith, or combined Mining+Smithing XP/h.',
       gather: {
         skillLabel: 'Mining', hiscoresIndex: 15, tickSec: 0.6,
+        // Inter-rock turn/move time added to each ore's player cost. Approximate
+        // (calibrated so iron caps at 3 rocks, not 4); see README calibration note.
+        switchSec: 1.2,
         toolLabel: 'Pickaxe',
         tools: [
           { id: 'bronze',  name: 'Bronze',  reqLevel: 1,  rollTicks: 8 },

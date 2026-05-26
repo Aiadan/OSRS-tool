@@ -10,6 +10,7 @@
   const PICKS   = SECTION.gather.tools;
   const BARS    = SECTION.process.bars;
   const TICK_S  = SECTION.gather.tickSec;             // 0.6
+  const SWITCH_SEC = SECTION.gather.switchSec;        // inter-rock turn/move time
   const FURNACE_S = SECTION.process.furnaceActionSec; // 2.4
   const ANVIL_S   = SECTION.process.anvilActionSec;   // 1.8
   const RING    = SECTION.process.ringOfForging;
@@ -49,21 +50,31 @@
     return (pick.rollTicks * TICK_S) / p;
   }
 
-  // Ores/sec at efficiency 1 with `count` rocks: min(roll-limited, respawn supply).
-  function oresPerSecRaw(rock, miningLevel, pick, count) {
-    if (miningLevel < rock.gatherLevel) return 0;
+  // Player time committed per ore: extraction + the turn/interaction time to reach
+  // the next rock. SWITCH_SEC is why you never need infinite rocks — with real
+  // movement between them a few rocks saturate your mining (e.g. iron caps at 3,
+  // not 4). Approximate (see README calibration note).
+  function cycleSec(rock, miningLevel, pick) {
     const mt = mineTimeSec(rock, miningLevel, pick);
-    if (!isFinite(mt)) return 0;
-    const supply = count / (mt + rock.respawnSec);
-    return Math.min(1 / mt, supply);
+    return isFinite(mt) ? mt + SWITCH_SEC : Infinity;
   }
 
-  // Smallest integer count that makes the rock roll-limited at this level/pickaxe.
+  // Ores/sec at efficiency 1 with `count` rocks: min(player-limited, respawn supply).
+  function oresPerSecRaw(rock, miningLevel, pick, count) {
+    if (miningLevel < rock.gatherLevel) return 0;
+    const cyc = cycleSec(rock, miningLevel, pick);
+    if (!isFinite(cyc)) return 0;
+    const supply = count / (cyc + rock.respawnSec);
+    return Math.min(1 / cyc, supply);
+  }
+
+  // Smallest integer count that makes the rock player-limited (never waiting on
+  // respawn) at this level/pickaxe.
   function rollLimitedCount(rock, miningLevel, pick) {
     const lvl = Math.max(miningLevel, rock.gatherLevel);
-    const mt = mineTimeSec(rock, lvl, pick);
-    if (!isFinite(mt)) return 1;
-    return Math.max(1, Math.ceil(1 + rock.respawnSec / mt));
+    const cyc = cycleSec(rock, lvl, pick);
+    if (!isFinite(cyc)) return 1;
+    return Math.max(1, Math.ceil(1 + rock.respawnSec / cyc));
   }
 
   // Resolve the count for a rock: user value if present & >0, else roll-limited default.
