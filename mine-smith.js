@@ -286,6 +286,7 @@
     if (!(xpPerHour > 0) || !xpPerBar) { el.innerHTML = ''; return; }
     let found = null;
     for (let L = inputs.miningLevel + 1; L <= 99 && !found; L++) {
+      // Assume Smithing keeps pace with Mining (player is training this bar).
       const sL = Math.min(99, inputs.smithingLevel + (L - inputs.miningLevel));
       const rows = BARS.map(bar => ({ bar, rates: barRate({ miningLevel: L, smithingLevel: sL, pickId: inputs.pickId, bar, ringOfForging: inputs.ringOfForging, efficiency: inputs.efficiency }) }));
       const b = bestBarByKey(rows, key);
@@ -298,6 +299,115 @@
     }
     const need = Math.max(0, TO.xpAt(found.level) - curXp);
     el.innerHTML = `Overtaken by <strong>${found.b.bar.name}</strong> at Mining ${found.level} — ${TO.fmt(Math.ceil(need / xpPerBar))} more ${best.bar.name} <span class="ot-dim">(≈${TO.fmtDuration(need / xpPerHour)}, counts held)</span>`;
+  }
+
+  // ---- Tables + activity modes ----
+  // Which table/chart the Mining<->Smithing toggle shows, and the metric each
+  // offers. The sort key selects the active metric within a table.
+  const ROCK_MODES = {
+    miningXpPerHour: { label: 'Mining XP/h', yTitle: 'Mining XP / h' }
+  };
+  const BAR_MODES = {
+    smithingXpPerHour: { label: 'Smithing XP/h', yTitle: 'Smithing XP / h' },
+    totalXpPerHour:    { label: 'Total XP/h',    yTitle: 'Total XP / h' }
+  };
+
+  function renderRockTable(rows, inputs) {
+    const best = bestRockByKey(rows, (sortKey in ROCK_MODES) ? sortKey : 'miningXpPerHour');
+    const sorted = rows.slice().sort((a, b) => {
+      if (a.rates.eligible !== b.rates.eligible) return a.rates.eligible ? -1 : 1;
+      const c = TO.compareBy(a, b, sortKey);
+      return sortDir === 'asc' ? c : -c;
+    });
+    const tb = document.getElementById('ms-rock-tbody'); tb.innerHTML = '';
+    const pick = effectivePick(inputs.pickId, inputs.miningLevel);
+    for (const row of sorted) {
+      const tr = document.createElement('tr');
+      const ex = excludedRockIds.has(row.rock.id);
+      if (!row.rates.eligible) tr.classList.add('ineligible');
+      if (ex) tr.classList.add('excluded');
+      if (best && row.rock.id === best.rock.id) tr.classList.add('recommended');
+      const cells = row.projection ? row.projection.rates : row.rates;
+      const def = rollLimitedCount(row.rock, Math.max(inputs.miningLevel, row.rock.gatherLevel), pick);
+      const cv = (rockCounts[row.rock.id] != null && rockCounts[row.rock.id] > 0) ? rockCounts[row.rock.id] : '';
+      const xpCell = `${TO.fmt(cells.miningXpPerHour)}${row.projection ? ` <span class="ot-dim">(@${row.projection.miningLevel})</span>` : ''}`;
+      tr.innerHTML = `
+        <td class="tree-name">${row.rock.name}</td>
+        <td class="numeric">${row.rock.gatherLevel}</td>
+        <td class="numeric">${TO.fmtPct(cells.successChance)}</td>
+        <td class="numeric"><input type="number" min="0" class="rock-count" data-rock="${row.rock.id}" value="${cv}" placeholder="${def}"></td>
+        <td class="numeric">${TO.fmt(cells.oresPerHour)}</td>
+        <td class="numeric">${xpCell}</td>`;
+      tr.addEventListener('click', (e) => {
+        if (e.target.closest('.rock-count')) return;
+        if (excludedRockIds.has(row.rock.id)) excludedRockIds.delete(row.rock.id); else excludedRockIds.add(row.rock.id);
+        render();
+      });
+      tb.appendChild(tr);
+    }
+    tb.querySelectorAll('.rock-count').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const id = inp.dataset.rock; const v = parseInt(inp.value, 10);
+        if (!v || v <= 0) delete rockCounts[id]; else rockCounts[id] = v;
+        render();
+      });
+    });
+    document.querySelectorAll('#ms-rock-table thead th').forEach(th => {
+      th.classList.remove('sorted', 'asc', 'desc');
+      if (th.dataset.key === sortKey) th.classList.add('sorted', sortDir);
+    });
+  }
+
+  function renderBarTable(rows) {
+    const best = bestBarByKey(rows, (sortKey in BAR_MODES) ? sortKey : 'totalXpPerHour');
+    const sorted = rows.slice().sort((a, b) => {
+      if (a.rates.eligible !== b.rates.eligible) return a.rates.eligible ? -1 : 1;
+      const c = TO.compareBy(a, b, sortKey);
+      return sortDir === 'asc' ? c : -c;
+    });
+    const tb = document.getElementById('ms-bar-tbody'); tb.innerHTML = '';
+    for (const row of sorted) {
+      const tr = document.createElement('tr');
+      const ex = excludedBarIds.has(row.bar.id);
+      if (!row.rates.eligible) tr.classList.add('ineligible');
+      if (ex) tr.classList.add('excluded');
+      if (best && row.bar.id === best.bar.id) tr.classList.add('recommended');
+      const cells = row.projection ? row.projection.rates : row.rates;
+      const proj = row.projection ? ` <span class="ot-dim">(@M${row.projection.miningLevel}/S${row.projection.smithingLevel})</span>` : '';
+      tr.innerHTML = `
+        <td class="tree-name">${row.bar.name}</td>
+        <td>${cells.recipeLabel}</td>
+        <td class="numeric">${row.bar.smithLevel}</td>
+        <td class="numeric">${cells.smithingXpPerBar}</td>
+        <td class="numeric">${TO.fmt(cells.smithingXpPerHour)}</td>
+        <td class="numeric">${TO.fmt(cells.totalXpPerHour)}${proj}</td>`;
+      tr.addEventListener('click', () => {
+        if (excludedBarIds.has(row.bar.id)) excludedBarIds.delete(row.bar.id); else excludedBarIds.add(row.bar.id);
+        render();
+      });
+      tb.appendChild(tr);
+    }
+    document.querySelectorAll('#ms-bar-table thead th').forEach(th => {
+      th.classList.remove('sorted', 'asc', 'desc');
+      if (th.dataset.key === sortKey) th.classList.add('sorted', sortDir);
+    });
+  }
+
+  // Show only the active table/chart wrapper; highlight the active toggle button.
+  function syncActivity() {
+    const rockWrap = document.getElementById('ms-rock-wrap');
+    const barWrap = document.getElementById('ms-bar-wrap');
+    if (rockWrap) rockWrap.classList.toggle('hidden', activity !== 'mining');
+    if (barWrap) barWrap.classList.toggle('hidden', activity !== 'smithing');
+    document.querySelectorAll('section[data-view="mine-smith"] .activity-btn')
+      .forEach(btn => btn.classList.toggle('active', btn.dataset.activity === activity));
+  }
+  // Switch table, reset the sort key to that table's primary metric, re-render.
+  function setActivity(next) {
+    activity = (next === 'smithing') ? 'smithing' : 'mining';
+    sortKey = (activity === 'mining') ? 'miningXpPerHour' : 'totalXpPerHour';
+    sortDir = 'desc';
+    render();
   }
 
   TO.registerSection('mine-smith', { init: () => {}, render: () => {} });
