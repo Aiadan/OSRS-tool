@@ -410,5 +410,161 @@
     render();
   }
 
-  TO.registerSection('mine-smith', { init: () => {}, render: () => {} });
+  // ---- Charts ----
+  const ROCK_FALLBACK = ['#b08d57','#b87333','#cfcfcf','#8a5a44','#c0c0c8','#3a3a3a','#d4af37','#4f6bb0','#3f7d5a','#3fa7a0'];
+  const BAR_FALLBACK  = ['#b87333','#8a5a44','#9aa0a6','#4f6bb0','#3f7d5a','#3fa7a0'];
+  function rockColor(rock, i) { return rock.color || ROCK_FALLBACK[i % ROCK_FALLBACK.length]; }
+  function barColor(bar, i) { return BAR_FALLBACK[i % BAR_FALLBACK.length]; }
+
+  // XP/h vs Mining level 1..99 for the line chart.
+  function rockCurve(rock, inputs) {
+    const out = [];
+    for (let L = 1; L <= 99; L++) out.push(L < rock.gatherLevel ? 0 : Math.round(rockRate({ miningLevel: L, pickId: inputs.pickId, rock, efficiency: inputs.efficiency }).miningXpPerHour));
+    return out;
+  }
+  function barCurve(bar, inputs, key) {
+    const out = [];
+    for (let L = 1; L <= 99; L++) out.push(Math.round(barRate({ miningLevel: L, smithingLevel: inputs.smithingLevel, pickId: inputs.pickId, bar, ringOfForging: inputs.ringOfForging, efficiency: inputs.efficiency })[key] || 0));
+    return out;
+  }
+
+  function createCharts() {
+    const barCtx = document.getElementById('ms-bar-chart').getContext('2d');
+    barChart = new Chart(barCtx, {
+      type: 'bar',
+      data: { labels: [], datasets: [{ label: '', data: [], backgroundColor: [], borderWidth: 1 }] },
+      options: TO.chartCommon({
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${TO.fmt(ctx.parsed.y)} XP/h` } } },
+        scales: { x: TO.axisOpts(), y: TO.axisOpts({ beginAtZero: true }) }
+      })
+    });
+    const lineCtx = document.getElementById('ms-line-chart').getContext('2d');
+    lineChart = new Chart(lineCtx, {
+      type: 'line',
+      data: { labels: Array.from({ length: 99 }, (_, i) => i + 1), datasets: [] },
+      options: TO.chartCommon({
+        plugins: {
+          legend: {
+            labels: { color: '#e8e7e3' },
+            onClick: (e, item) => {
+              const ds = lineChart.data.datasets[item.datasetIndex]; if (!ds || !ds._entityId) return;
+              const set = activity === 'mining' ? excludedRockIds : excludedBarIds;
+              if (set.has(ds._entityId)) set.delete(ds._entityId); else set.add(ds._entityId);
+              render();
+            }
+          },
+          tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${TO.fmt(ctx.parsed.y)} XP/h` } }
+        },
+        scales: {
+          x: TO.axisOpts({ title: { display: true, text: 'Mining level', color: '#9a9890' } }),
+          y: TO.axisOpts({ beginAtZero: true, title: { display: true, text: 'XP / h', color: '#9a9890' } })
+        }
+      })
+    });
+  }
+
+  function updateCharts(rockRows, barRows, inputs) {
+    const isMining = activity === 'mining';
+    const mode = isMining ? ROCK_MODES.miningXpPerHour : (BAR_MODES[sortKey] || BAR_MODES.totalXpPerHour);
+    const key  = isMining ? 'miningXpPerHour' : ((sortKey in BAR_MODES) ? sortKey : 'totalXpPerHour');
+    const rows = isMining ? rockRows : barRows;
+    const excluded = isMining ? excludedRockIds : excludedBarIds;
+    const idOf    = r => isMining ? r.rock.id : r.bar.id;
+    const nameOf  = r => isMining ? r.rock.name : r.bar.name;
+    const colorOf = (r, i) => isMining ? rockColor(r.rock, i) : barColor(r.bar, i);
+
+    barChart.data.labels = rows.map(nameOf);
+    barChart.data.datasets[0].label = mode.label;
+    barChart.data.datasets[0].data = rows.map(r => (r.rates.eligible && !excluded.has(idOf(r))) ? Math.round(r.rates[key]) : 0);
+    barChart.data.datasets[0].backgroundColor = rows.map((r, i) => excluded.has(idOf(r)) ? 'rgba(80,80,80,0.35)' : (r.rates.eligible ? colorOf(r, i) : 'rgba(150,150,150,0.25)'));
+    barChart.update();
+
+    lineChart.data.datasets = rows.map((r, i) => {
+      const color = colorOf(r, i);
+      const ds = {
+        label: nameOf(r),
+        data: isMining ? rockCurve(r.rock, inputs) : barCurve(r.bar, inputs, key),
+        borderColor: color, backgroundColor: color, borderWidth: 2,
+        pointRadius: 0, pointHoverRadius: 4, tension: 0.15, hidden: excluded.has(idOf(r))
+      };
+      ds._entityId = idOf(r);
+      return ds;
+    });
+    if (lineChart.options.scales && lineChart.options.scales.y && lineChart.options.scales.y.title) lineChart.options.scales.y.title.text = mode.yTitle;
+    lineChart.update();
+
+    const barH  = document.getElementById('ms-bar-title');
+    const lineH = document.getElementById('ms-line-title');
+    if (barH)  barH.textContent  = `${mode.label} per ${isMining ? 'rock' : 'bar'} — current setup`;
+    if (lineH) lineH.textContent = `${mode.label} vs Mining level`;
+  }
+
+  // ---- Wiring ----
+  function render() {
+    if (!initialized) return;
+    const inputs = readInputs();
+    buildPickOptions(inputs.miningLevel);
+    document.getElementById('ms-pick-select').value = inputs.pickId;
+    saveState(inputs);
+    syncActivity();
+    const rockRows = buildRockRows(inputs);
+    const barRows  = buildBarRows(inputs);
+    renderRecommendation(rockRows, barRows, inputs);
+    renderRockTable(rockRows, inputs);
+    renderBarTable(barRows);
+    updateCharts(rockRows, barRows, inputs);
+  }
+
+  function init() {
+    if (initialized) return;
+    const stored = loadState();
+    if (stored) {
+      if (stored.miningLevel)   document.getElementById('ms-mining-level').value = stored.miningLevel;
+      if (stored.smithingLevel) document.getElementById('ms-smithing-level').value = stored.smithingLevel;
+      if (stored.efficiency)    document.getElementById('ms-efficiency').value = stored.efficiency;
+      document.getElementById('ms-ring').checked = !!stored.ringOfForging;
+      if (stored.activity === 'mining' || stored.activity === 'smithing') activity = stored.activity;
+      if (stored.sortKey) sortKey = stored.sortKey;
+      if (stored.sortDir === 'asc' || stored.sortDir === 'desc') sortDir = stored.sortDir;
+      if (Array.isArray(stored.excludedRockIds)) {
+        const known = new Set(ROCKS.map(r => r.id));
+        excludedRockIds = new Set(stored.excludedRockIds.filter(id => known.has(id)));
+      }
+      if (Array.isArray(stored.excludedBarIds)) {
+        const known = new Set(BARS.map(b => b.id));
+        excludedBarIds = new Set(stored.excludedBarIds.filter(id => known.has(id)));
+      }
+      if (stored.rockCounts && typeof stored.rockCounts === 'object') rockCounts = { ...stored.rockCounts };
+    }
+    const defLvl = parseInt(document.getElementById('ms-mining-level').value, 10) || 1;
+    buildPickOptions(defLvl);
+    if (stored && PICKS.some(p => p.id === stored.pickId)) {
+      document.getElementById('ms-pick-select').value = stored.pickId;
+    } else {
+      // Default to the best pickaxe the current Mining level can wield.
+      document.getElementById('ms-pick-select').value = (PICKS.filter(p => defLvl >= p.reqLevel).pop() || PICKS[0]).id;
+    }
+
+    ['ms-mining-level', 'ms-smithing-level', 'ms-efficiency', 'ms-pick-select', 'ms-ring'].forEach(id => {
+      const el = document.getElementById(id);
+      el.addEventListener('input', render);
+      el.addEventListener('change', render);
+    });
+    document.querySelectorAll('#ms-rock-table thead th, #ms-bar-table thead th').forEach(th => {
+      th.addEventListener('click', () => {
+        const key = th.dataset.key; if (!key) return;
+        if (sortKey === key) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+        else { sortKey = key; sortDir = th.dataset.numeric != null ? 'desc' : 'asc'; }
+        render();
+      });
+    });
+    document.querySelectorAll('section[data-view="mine-smith"] .activity-btn').forEach(btn => {
+      btn.addEventListener('click', () => setActivity(btn.dataset.activity));
+    });
+    createCharts();
+    initialized = true;
+    render();
+  }
+
+  TO.registerSection('mine-smith', { init, render });
 })();
