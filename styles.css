@@ -632,6 +632,15 @@ code {
 }
 .home-link:hover { text-decoration: underline; }
 
+/* Topbar section switcher — inherits the global select colours; trimmed to
+   sit alongside the title rather than the taller input-row selects. */
+.section-select {
+  align-self: center;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.85rem;
+  max-width: 16rem;
+}
+
 /* ---- Views (switched by hash router) ------------------------------- */
 
 .view {

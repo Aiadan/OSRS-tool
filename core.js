@@ -249,6 +249,19 @@ window.TO = (function () {
     try { localStorage.setItem(KEY_LAST_SECTION, id); } catch (e) {}
     const homeLink = document.getElementById('home-link');
     if (homeLink) homeLink.style.visibility = (id === 'home') ? 'hidden' : 'visible';
+    const menu = document.getElementById('section-select');
+    if (menu) menu.value = VALID_SECTIONS.has(id) ? id : '';
+  }
+
+  // Topbar dropdown: jump straight to a section without bouncing through the
+  // index. Setting the hash fires hashchange -> navigate(), so the selection
+  // takes the same path as a typed URL or back/forward.
+  function wireSectionMenu() {
+    const sel = document.getElementById('section-select');
+    if (!sel) return;
+    sel.addEventListener('change', () => {
+      if (VALID_SECTIONS.has(sel.value)) window.location.hash = '#/' + sel.value;
+    });
   }
 
   function setVisibleView(id) {
@@ -630,6 +643,7 @@ window.TO = (function () {
     wireInfoToggles();
     wireHiscores();
     wireDisplayModeToggle();
+    wireSectionMenu();
     wireStickyTheadRelease();
 
     // Each section module attaches its own listeners and renders once. Both
