@@ -34,20 +34,6 @@
     return Math.max(0, Math.min(1, value / 256));
   }
 
-  // Secondary line under the success %: the level a rock first hits 100% success
-  // (only rocks with high >= 255 ever do), or its ceiling at 99 if it never does.
-  // Returns '' when there's nothing to add — the player is already at/past the
-  // 100% level, or sitting at 99 where the cell already shows the ceiling.
-  function successNote(rock, miningLevel) {
-    for (let L = Math.max(1, rock.gatherLevel); L <= 99; L++) {
-      if (interp(rock.low, rock.high, L) >= 1) {
-        return miningLevel >= L ? '' : `100% at ${L}`;
-      }
-    }
-    if (miningLevel >= 99) return '';
-    return `${TO.fmtPct(interp(rock.low, rock.high, 99))} cap`;
-  }
-
   // Highest pickaxe the player can actually wield at miningLevel, capped by the
   // selected tier (mirror fish-cook's harpoon fallback).
   function effectivePick(pickId, miningLevel) {
@@ -109,6 +95,7 @@
       blockingReasons: eligible ? [] : [`Mining ${rock.gatherLevel}`],
       pickName: pick.name, count,
       successChance: interp(rock.low, rock.high, Math.max(miningLevel, rock.gatherLevel)),
+      mineTimeSec: mineTimeSec(rock, miningLevel, pick),
       oresPerHour,
       miningXpPerHour: oresPerHour * rock.gatherXp
     };
@@ -251,7 +238,7 @@
     const r = best.rates;
     t.textContent = best.rock.name;
     xp.textContent = `${TO.fmt(r.miningXpPerHour)} Mining XP/h`;
-    d.textContent = `${r.pickName} at Mining ${inputs.miningLevel} · ${TO.fmtPct(r.successChance)} success · ${TO.fmt(r.oresPerHour)} ore/h · assumes ${r.count} rock${r.count === 1 ? '' : 's'}`;
+    d.textContent = `${r.pickName} at Mining ${inputs.miningLevel} · ${TO.fmtActionRate(r.successChance, r.mineTimeSec)} · ${TO.fmt(r.oresPerHour)} ore/h · assumes ${r.count} rock${r.count === 1 ? '' : 's'}`;
   }
   function writeBarRec(prefix, best, inputs, key, label) {
     const t = document.getElementById(`ms-rec-${prefix}-title`);
@@ -363,11 +350,18 @@
       const def = rollLimitedCount(row.rock, Math.max(inputs.miningLevel, row.rock.gatherLevel), pick);
       const cv = (rockCounts[row.rock.id] != null && rockCounts[row.rock.id] > 0) ? rockCounts[row.rock.id] : '';
       const xpCell = `${TO.fmt(cells.miningXpPerHour)}${row.projection ? ` <span class="ot-dim">(@${row.projection.miningLevel})</span>` : ''}`;
-      const note = successNote(row.rock, inputs.miningLevel);
+      const fullLvl = TO.fullSuccessLevel(L => interp(row.rock.low, row.rock.high, L), row.rock.gatherLevel);
+      const note = TO.actionNote({
+        levelAtFull:  fullLvl,
+        floorSeconds: pick.rollTicks * TICK_S,
+        capChance:    interp(row.rock.low, row.rock.high, 99),
+        capSeconds:   (pick.rollTicks * TICK_S) / interp(row.rock.low, row.rock.high, 99),
+        currentLevel: inputs.miningLevel
+      });
       tr.innerHTML = `
         <td class="tree-name">${row.rock.name}</td>
         <td class="numeric">${row.rock.gatherLevel}</td>
-        <td class="numeric">${TO.fmtPct(cells.successChance)}${note ? `<span class="success-note">${note}</span>` : ''}</td>
+        <td class="numeric">${TO.fmtActionRate(cells.successChance, cells.mineTimeSec)}${note ? `<span class="success-note">${note}</span>` : ''}</td>
         <td class="numeric"><input type="number" min="0" class="rock-count" data-rock="${row.rock.id}" value="${cv}" placeholder="${def}"></td>
         <td class="numeric">${TO.fmt(cells.oresPerHour)}</td>
         <td class="numeric">${xpCell}</td>`;
@@ -389,6 +383,8 @@
       th.classList.remove('sorted', 'asc', 'desc');
       if (th.dataset.key === sortKey) th.classList.add('sorted', sortDir);
     });
+    const msTh = document.querySelector('#ms-rock-table thead th[data-key="successChance"]');
+    if (msTh) msTh.textContent = (TO.getDisplayMode() === 'seconds') ? 'Mine / ore' : 'Success';
   }
 
   function renderBarTable(rows) {
