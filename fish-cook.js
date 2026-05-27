@@ -108,6 +108,7 @@
         eligibleFish: [],
         eligibleFishLabel: '—',
         toolName: (spot.displayToolPrefix || '') + tool.name,
+        catchKey: effectiveCatchKey,
         catchTimeSec: Infinity,
         avgCookSuccess: 0,
         fishPerHour: 0,
@@ -170,6 +171,7 @@
         eligibleFish: eligibleFish.map(f => f.id),
         eligibleFishLabel: eligibleFish.map(f => f.name).join(', '),
         toolName: (spot.displayToolPrefix || '') + tool.name,
+        catchKey: effectiveCatchKey,
         catchTimeSec: Infinity,
         avgCookSuccess: 0,
         fishPerHour: 0,
@@ -231,6 +233,7 @@
       eligibleFish: eligibleFish.map(f => f.id),
       eligibleFishLabel: eligibleFish.map(f => f.name).join(', '),
       toolName: (spot.displayToolPrefix || '') + tool.name,
+      catchKey: effectiveCatchKey,
       catchTimeSec: secPerCatch,
       avgCookSuccess,
       fishPerHour,
@@ -238,6 +241,26 @@
       cookingXpPerHour: fishPerHour * expectedCookXp,
       totalXpPerHour:   fishPerHour * (expectedFishingXp + expectedCookXp) + extraFishingXpPerHour
     };
+  }
+
+  // P(this tick yields some fish) at a Fishing level, using the same catch key
+  // the live rate resolved. Cascade: 1 - prod(1 - p_i). Big-net: sum of p_i
+  // (expected catches/tick; may exceed 1, mirroring catchTimeSec).
+  function anyCatchChance(spot, fishLevel, catchKey) {
+    const eff = fishLevel + (spot.levelBoost || 0);
+    const ps = spot.fishIds.map(id => FISH_BY_ID[id]).filter(Boolean)
+      .filter(f => fishLevel >= f.fishLevel)
+      .map(f => { const t = catchTableFor(f, catchKey); return t ? interp(t.low, t.high, eff) : 0; });
+    if (!ps.length) return 0;
+    if (spot.toolFamily === 'big-net') return ps.reduce((s, p) => s + p, 0);
+    return 1 - ps.reduce((surv, p) => surv * (1 - p), 1);
+  }
+  // [{name, p}] per eligible fish, for the hover tooltip on multi-fish spots.
+  function perFishChances(spot, fishLevel, catchKey) {
+    const eff = fishLevel + (spot.levelBoost || 0);
+    return spot.fishIds.map(id => FISH_BY_ID[id]).filter(Boolean)
+      .filter(f => fishLevel >= f.fishLevel)
+      .map(f => { const t = catchTableFor(f, catchKey); return { name: f.name, p: t ? interp(t.low, t.high, eff) : 0 }; });
   }
 
   // Sweep fishing level 1..99 holding cookLevel constant. `ratesKey` selects
@@ -394,7 +417,7 @@
     xpEl.textContent   = `${TO.fmt(r[primaryXpKey])} ${primaryXpLabel}`;
     detailEl.textContent =
       `${r.toolName} at Fishing ${inputs.fishLevel}, Cooking ${inputs.cookLevel} · ` +
-      `${TO.fmt(r.fishPerHour)} fish/h · ${TO.fmtTime(r.catchTimeSec)}/catch · ` +
+      `${TO.fmt(r.fishPerHour)} fish/h · ${TO.getDisplayMode() === 'seconds' ? `${TO.fmtTime(r.catchTimeSec)}/catch` : `${TO.fmtPct(TICK_S / r.catchTimeSec)}/tick`} · ` +
       `${TO.fmtPct(r.avgCookSuccess)} avg cook success · ${TO.fmt(r.totalXpPerHour)} total XP/h`;
   }
 
@@ -662,6 +685,7 @@
     const best = bestForHighlight(rows);
     const tbody = document.getElementById('fc-results-tbody');
     tbody.innerHTML = '';
+    const fishLevelNow = readInputs().fishLevel;
     for (const row of sorted) {
       const tr = document.createElement('tr');
       const isExcluded = excludedSpotIds.has(row.spot.id);
@@ -676,7 +700,24 @@
       if (row.projection) titleParts.push(`XP/h projected at Fishing ${row.projection.fishLevel}, Cooking ${row.projection.cookLevel} (unlock)`);
       titleParts.push(isExcluded ? 'Click to include this spot again.' : 'Click to exclude this spot from best-for picks.');
       tr.title = titleParts.join(' — ');
-      const catchCell = isFinite(cells.catchTimeSec) ? TO.fmtTime(cells.catchTimeSec) : '—';
+      const catchKey = cells.catchKey;
+      const pAny = isFinite(cells.catchTimeSec) ? TICK_S / cells.catchTimeSec : 0;
+      const fishFull = TO.fullSuccessLevel(L => anyCatchChance(row.spot, L, catchKey), row.spot.minFishLevel);
+      const cap99 = anyCatchChance(row.spot, 99, catchKey);
+      const catchNote = TO.actionNote({
+        levelAtFull:  fishFull,
+        floorSeconds: TICK_S,
+        capChance:    cap99,
+        capSeconds:   TICK_S / cap99,
+        currentLevel: fishLevelNow
+      });
+      const pf = perFishChances(row.spot, fishLevelNow, catchKey);
+      const catchTitle = pf.length > 1
+        ? ` title="${pf.map(x => `${x.name}: ${TO.fmtPct(x.p)}/tick`).join('&#10;')}"`
+        : '';
+      const catchVal = (TO.getDisplayMode() === 'seconds')
+        ? (isFinite(cells.catchTimeSec) ? TO.fmtTime(cells.catchTimeSec) : '—')
+        : TO.fmtActionRate(pAny, cells.catchTimeSec);
       const fishLabel = cells.eligibleFishLabel || '—';
       const fishCell = row.projection
         ? `${fishLabel} <span class="ot-dim">(@ Fishing ${row.projection.fishLevel})</span>`
@@ -686,7 +727,7 @@
         <td class="numeric">${row.spot.minFishLevel}</td>
         <td>${cells.toolName}</td>
         <td>${fishCell}</td>
-        <td class="numeric">${catchCell}</td>
+        <td class="numeric"${catchTitle}>${catchVal}${catchNote ? `<span class="success-note">${catchNote}</span>` : ''}</td>
         <td class="numeric">${TO.fmtPct(cells.avgCookSuccess)}</td>
         <td class="numeric">${TO.fmt(cells.fishPerHour)}</td>
         <td class="numeric">${TO.fmt(cells.fishingXpPerHour)}</td>
@@ -704,6 +745,8 @@
       th.classList.remove('sorted', 'asc', 'desc');
       if (th.dataset.key === sortKey) th.classList.add('sorted', sortDir);
     });
+    const ccTh = document.querySelector('#fc-results-table thead th[data-key="catchTimeSec"]');
+    if (ccTh) ccTh.textContent = (TO.getDisplayMode() === 'seconds') ? 'Catch / fish' : 'Catch chance';
   }
 
   // Build a deterministic colour per spot using its first fish's catalog color,
