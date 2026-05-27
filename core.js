@@ -103,6 +103,70 @@ window.TO = (function () {
     return m === 0 ? `${h}h` : `${h}h ${m}m`;
   }
 
+  // ---- Display mode: success % vs average seconds per action -------------
+  // Global, persisted. Each section's single per-action cell renders through
+  // fmtActionRate/actionNote so all four read identically.
+  const KEY_DISPLAY_MODE = 'training-optimizer:displayMode';
+  let displayMode = (localStorage.getItem(KEY_DISPLAY_MODE) === 'seconds') ? 'seconds' : 'percent';
+
+  function getDisplayMode() { return displayMode; }
+
+  function setDisplayMode(mode) {
+    const next = (mode === 'seconds') ? 'seconds' : 'percent';
+    if (next === displayMode) return;
+    displayMode = next;
+    try { localStorage.setItem(KEY_DISPLAY_MODE, displayMode); } catch (e) {}
+    syncDisplayModeToggle();
+    // Re-render every initialised section so cells + headers pick up the mode.
+    for (const id of Object.keys(sections)) {
+      try { sections[id].render && sections[id].render(); } catch (e) { console.error(e); }
+    }
+    if (TO.syncStickyThead) TO.syncStickyThead();
+  }
+
+  // Reflect the active mode on the toolbar toggle (no-op until Task 2 adds it).
+  function syncDisplayModeToggle() {
+    document.querySelectorAll('.display-mode-toggle [data-mode]').forEach(btn => {
+      const on = btn.dataset.mode === displayMode;
+      btn.classList.toggle('active', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+
+  // Per-action cell value in the active mode. successChance: per-attempt
+  // probability 0..1; avgSeconds: average time per SUCCESSFUL action.
+  function fmtActionRate(successChance, avgSeconds) {
+    if (displayMode === 'seconds') {
+      return (avgSeconds == null || !isFinite(avgSeconds)) ? '—' : fmtTime(avgSeconds);
+    }
+    if (successChance == null || !isFinite(successChance)) return '—';
+    return fmtPct(successChance);
+  }
+
+  // First level in [unlockLevel, 99] where curveFn(L) >= 1 (success hits 100%),
+  // or null if it never does. curveFn maps a level to a 0..1 success chance.
+  function fullSuccessLevel(curveFn, unlockLevel) {
+    for (let L = Math.max(1, unlockLevel || 1); L <= 99; L++) {
+      if (curveFn(L) >= 1) return L;
+    }
+    return null;
+  }
+
+  // Dim second line under an action cell, in the active mode. Drop rules:
+  // hide the "...at L" line once currentLevel >= L; hide the cap/floor line at 99.
+  function actionNote({ levelAtFull, floorSeconds, capChance, capSeconds, currentLevel }) {
+    if (levelAtFull != null) {
+      if (currentLevel >= levelAtFull) return '';
+      return (displayMode === 'seconds')
+        ? `${fmtTime(floorSeconds)} at ${levelAtFull}`
+        : `100% at ${levelAtFull}`;
+    }
+    if (currentLevel >= 99) return '';
+    return (displayMode === 'seconds')
+      ? `${fmtTime(capSeconds)} floor`
+      : `${fmtPct(capChance)} cap`;
+  }
+
   function clampInt(id, lo, hi) {
     const el = document.getElementById(id);
     const v = parseInt(el.value, 10);
@@ -660,6 +724,7 @@ window.TO = (function () {
     chartCommon, axisOpts,
     registerSection, navigate,
     xpAt, levelForXp, getSkillXp,
+    getDisplayMode, setDisplayMode, fmtActionRate, fullSuccessLevel, actionNote,
     _wikiSync: { connectAnyPort, connectOnePort }
   };
 })();
