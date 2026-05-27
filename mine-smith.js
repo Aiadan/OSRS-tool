@@ -45,7 +45,7 @@
       }
     }
     if (miningLevel >= 99) return '';
-    return `max ${TO.fmtPct(interp(rock.low, rock.high, 99))} @99`;
+    return `${TO.fmtPct(interp(rock.low, rock.high, 99))} cap`;
   }
 
   // Highest pickaxe the player can actually wield at miningLevel, capped by the
