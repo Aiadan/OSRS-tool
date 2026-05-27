@@ -243,14 +243,14 @@
       xpEl.textContent   = `${TO.fmt(r.wcXpPerHour)} WC XP/h`;
       detailEl.textContent =
         `Pure chop with ${best.axe.name} axe · ${TO.fmt(r.pureLogsPerHour)} logs/h · ` +
-        `${TO.fmtTime(r.chopTimePerLog)}/log`;
+        `${TO.getDisplayMode() === 'seconds' ? `${TO.fmtTime(r.chopTimePerLog)}/log` : `${TO.fmtPct(r.successChance)} chop`}`;
     } else if (mode === 'fletch') {
       const productName = r.chosenProduct ? r.chosenProduct.name : '(no bow yet)';
       treeEl.textContent = `${t.name} → ${productName}`;
       xpEl.textContent   = `${TO.fmt(r.fletchingXpPerHour)} Fletching XP/h`;
       detailEl.textContent =
         `Chop + fletch with ${best.axe.name} axe · ${TO.fmt(r.bowsPerHour)} bows/h · ` +
-        `${TO.fmtTime(r.chopTimePerLog)}/log + ${TO.fmtTime(ACT_S)}/fletch`;
+        `${TO.getDisplayMode() === 'seconds' ? `${TO.fmtTime(r.chopTimePerLog)}/log` : `${TO.fmtPct(r.successChance)} chop`} + ${TO.fmtTime(ACT_S)}/fletch`;
     } else {
       const pFm = fmSuccess(inputs.firemakingLevel);
       const burnTime = BURN.burnTickSec / pFm;
@@ -258,7 +258,7 @@
       xpEl.textContent   = `${TO.fmt(r.firemakingXpPerHour)} Firemaking XP/h`;
       detailEl.textContent =
         `Chop + burn with ${best.axe.name} axe · ${TO.fmt(r.burnLogsPerHour)} logs/h · ` +
-        `${TO.fmtTime(r.chopTimePerLog)}/log + ${TO.fmtTime(burnTime)}/light` +
+        `${TO.getDisplayMode() === 'seconds' ? `${TO.fmtTime(r.chopTimePerLog)}/log` : `${TO.fmtPct(r.successChance)} chop`} + ${TO.fmtTime(burnTime)}/light` +
         (inputs.firemakingLevel < BURN.guaranteedLevel ? ` (ignition ${TO.fmtPct(pFm)})` : '');
     }
   }
@@ -413,6 +413,8 @@
     const best = bestForHighlight(rows);
     const tbody = document.getElementById('results-tbody');
     tbody.innerHTML = '';
+    const inputs = readInputs();
+    const axe = AXES.find(a => a.id === inputs.axeId) || AXES[0];
     for (const row of sorted) {
       const tr = document.createElement('tr');
       const isExcluded = excludedTreeIds.has(row.tree.id);
@@ -427,6 +429,14 @@
       if (blockers.length) titleParts.push('Needs: ' + Array.from(new Set(blockers)).join(' · '));
       titleParts.push(isExcluded ? 'Click to include this tree again.' : 'Click to exclude this tree from best-for picks.');
       tr.title = titleParts.join(' — ');
+      const wcFull = TO.fullSuccessLevel(L => chopSuccess(L, axe, row.tree), row.tree.gatherLevel);
+      const wcNote = TO.actionNote({
+        levelAtFull:  wcFull,
+        floorSeconds: TICK_S,
+        capChance:    chopSuccess(99, axe, row.tree),
+        capSeconds:   TICK_S / chopSuccess(99, axe, row.tree),
+        currentLevel: inputs.wcLevel
+      });
       const fletchReqCell  = row.tree.products ? unlockFletchLevel(row.tree) : '—';
       const fletchXpCell   = row.tree.products ? TO.fmt(row.rates.fletchingXpPerHour) : '—';
       tr.innerHTML = `
@@ -434,7 +444,7 @@
         <td class="numeric">${row.tree.gatherLevel}</td>
         <td class="numeric">${fletchReqCell}</td>
         <td class="numeric">${row.tree.firemaking.fmLevel}</td>
-        <td class="numeric">${TO.fmtTime(row.rates.chopTimePerLog)}</td>
+        <td class="numeric">${TO.fmtActionRate(row.rates.successChance, row.rates.chopTimePerLog)}${wcNote ? `<span class="success-note">${wcNote}</span>` : ''}</td>
         <td class="numeric">${TO.fmt(row.rates.wcXpPerHour)}</td>
         <td class="numeric">${fletchXpCell}</td>
         <td class="numeric">${TO.fmt(row.rates.firemakingXpPerHour)}</td>
@@ -450,6 +460,8 @@
       th.classList.remove('sorted', 'asc', 'desc');
       if (th.dataset.key === sortKey) th.classList.add('sorted', sortDir);
     });
+    const ctTh = document.querySelector('#results-table thead th[data-key="chopTimePerLog"]');
+    if (ctTh) ctTh.textContent = (TO.getDisplayMode() === 'seconds') ? 'Chop / log' : 'Chop chance';
   }
 
   // ---- Per-bow curves (Fletching mode) ---------------------------------
