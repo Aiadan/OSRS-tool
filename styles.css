@@ -624,45 +624,83 @@ code {
   flex-wrap: wrap;
 }
 
-/* Topbar section switcher — the single nav control. Themed as a gold "pill"
-   so it reads as part of the masthead rather than a system form field:
-   transparent fill, gold edge + text, custom chevron. Overrides the global
-   `select` box styling. */
-.section-select {
-  align-self: center;
+/* ---- Section switcher (the heading is the menu) -------------------- */
+
+/* The section name in each .view-title is a button that inherits the big
+   gold Cinzel heading look and drops a menu of the other tools. */
+.view-title-switch {
   appearance: none;
-  -webkit-appearance: none;
-  background-color: transparent;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%23f4b53f' stroke-width='1.6' d='M1 1.5 6 6.5l5-5'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.65rem center;
-  background-size: 0.7rem;
-  border: 1px solid var(--gold-edge);
-  border-radius: 5px;
-  color: var(--accent);
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  padding: 0.34rem 1.7rem 0.34rem 0.7rem;
-  max-width: 18rem;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;             /* Cinzel, 1.5rem, 700 from .view-title */
+  color: inherit;            /* gold */
+  letter-spacing: inherit;
+  text-shadow: inherit;
   cursor: pointer;
-  transition: border-color 140ms, background-color 140ms, box-shadow 140ms;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: text-shadow 140ms;
 }
-.section-select:hover {
-  border-color: var(--accent);
-  background-color: rgba(244, 181, 63, 0.08);
+.view-title-switch:hover { text-shadow: 0 0 16px rgba(244, 181, 63, 0.4); }
+.view-title-switch:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* Downward caret drawn from borders so it tracks the gold currentColor. */
+.view-title-switch .caret {
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0.36em 0.3em 0 0.3em;
+  border-color: currentColor transparent transparent transparent;
+  opacity: 0.8;
+  transition: transform 160ms, opacity 140ms;
 }
-.section-select:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(244, 181, 63, 0.15);
+.view-title-switch:hover .caret { opacity: 1; }
+.view-title-switch[aria-expanded="true"] .caret { transform: rotate(180deg); }
+
+/* Dropdown panel — anchored under the heading button (the sticky .view-title
+   is the positioned containing block). */
+.view-title-menu {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  z-index: 50;
+  min-width: 16rem;
+  display: flex;
+  flex-direction: column;
+  padding: 0.35rem;
+  background: var(--bg-card);
+  border: 1px solid var(--gold-edge);
+  border-radius: 6px;
+  box-shadow: inset 0 1px 0 var(--gold-hi), 0 8px 24px rgba(0, 0, 0, 0.5);
 }
-/* The open list is OS-drawn; keep its rows legible against the dark theme. */
-.section-select option {
-  background: var(--bg-card-alt);
+.view-title-menu[hidden] { display: none; }
+.view-title-menu a {
+  display: block;
+  padding: 0.5rem 0.7rem;
+  border-radius: 4px;
   color: var(--text);
+  text-decoration: none;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-shadow: none;
+  white-space: nowrap;
 }
+.view-title-menu a:hover { background: rgba(244, 181, 63, 0.10); color: var(--accent); }
+.view-title-menu a[aria-current] { color: var(--accent); font-weight: 700; }
+/* "All tools" sits apart as the way back to the index. */
+.view-title-menu a[data-id="home"] {
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.25rem;
+  padding-bottom: 0.55rem;
+  border-radius: 4px 4px 0 0;
+}
+.view-title-menu a[data-id="home"]:hover { color: var(--accent); }
 
 /* ---- Views (switched by hash router) ------------------------------- */
 
@@ -932,10 +970,14 @@ input[type="checkbox"] {
    which never depends on the stack height). The dynamic offsets above keep the
    full sticky stack correct at all wider widths. */
 @media (max-width: 768px) {
-  .view-title,
   .view-flex .inputs.card,
   .mode-rail,
   thead { position: static; }
+  /* `relative` (not `static`) drops the sticky behaviour while still anchoring
+     the section-switcher menu, which is absolutely positioned within it.
+     `top: auto` cancels the sticky offset, which `relative` would otherwise
+     honour and push the heading down over the inputs. */
+  .view-title { position: relative; top: auto; }
   /* No-JS fallback: with the sticky stack static here, the wrap can safely be a
      horizontal scroll container so a too-wide table scrolls inside its card
      instead of spilling past it. When JS runs, `is-scrolling` already does this

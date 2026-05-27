@@ -17,13 +17,6 @@
       <div class="top-toolbar-left">
         <h1 id="page-title">OSRS Tool</h1>
         <span id="app-version" class="app-version"></span>
-        <select id="section-select" class="section-select" aria-label="Switch tool">
-          <option value="home">← All tools</option>
-          <option value="wc-fletch-fm">Woodcutting + Fletching + Firemaking</option>
-          <option value="fish-cook">Fishing + Cooking</option>
-          <option value="thieving">Thieving</option>
-          <option value="mine-smith">Mining + Smithing</option>
-        </select>
       </div>
       <div class="top-toolbar-right">
         <div class="display-mode-toggle" role="group" aria-label="Rate display mode">
@@ -67,7 +60,8 @@
 
     <!-- ====================  Woodcutting + Fletching + Firemaking  ==================== -->
     <section class="view hidden" data-view="wc-fletch-fm">
-      <h2 class="view-title">Woodcutting + Fletching + Firemaking
+      <h2 class="view-title">
+        <button type="button" class="view-title-switch" aria-haspopup="true" aria-expanded="false">Woodcutting + Fletching + Firemaking<span class="caret" aria-hidden="true"></span></button>
         <button type="button" class="info-btn" aria-expanded="false" aria-controls="info-wc-fletch-fm" aria-label="How this data is calculated">i</button>
       </h2>
       <div class="view-flex">
@@ -185,7 +179,8 @@
 
     <!-- ====================  Fishing + Cooking  ==================== -->
     <section class="view hidden" data-view="fish-cook">
-      <h2 class="view-title">Fishing + Cooking
+      <h2 class="view-title">
+        <button type="button" class="view-title-switch" aria-haspopup="true" aria-expanded="false">Fishing + Cooking<span class="caret" aria-hidden="true"></span></button>
         <button type="button" class="info-btn" aria-expanded="false" aria-controls="info-fish-cook" aria-label="How this data is calculated">i</button>
       </h2>
       <div class="view-flex">
@@ -306,7 +301,8 @@
 
     <!-- ====================  Thieving  ==================== -->
     <section class="view hidden" data-view="thieving">
-      <h2 class="view-title">Thieving
+      <h2 class="view-title">
+        <button type="button" class="view-title-switch" aria-haspopup="true" aria-expanded="false">Thieving<span class="caret" aria-hidden="true"></span></button>
         <button type="button" class="info-btn" aria-expanded="false" aria-controls="info-thieving" aria-label="How this data is calculated">i</button>
       </h2>
       <div class="view-flex view-flex--activity">
@@ -396,7 +392,8 @@
 
     <!-- ====================  Mining + Smithing  ==================== -->
     <section class="view hidden" data-view="mine-smith">
-      <h2 class="view-title">Mining + Smithing
+      <h2 class="view-title">
+        <button type="button" class="view-title-switch" aria-haspopup="true" aria-expanded="false">Mining + Smithing<span class="caret" aria-hidden="true"></span></button>
         <button type="button" class="info-btn" aria-expanded="false" aria-controls="info-mine-smith" aria-label="How this data is calculated">i</button>
       </h2>
       <div class="view-flex view-flex--activity">

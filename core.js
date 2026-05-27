@@ -18,6 +18,14 @@ window.TO = (function () {
   const KEY_SKILL_XP     = 'training-optimizer:skill-xp';
   const KEY_LEGACY_V1    = 'training-optimizer:v1';   // pre-multisection storage
   const VALID_SECTIONS   = new Set(['wc-fletch-fm', 'fish-cook', 'thieving', 'mine-smith']);
+  // Ordered [id, label] pairs for the section switcher menu (the heading
+  // dropdown). Order = the order shown on the index cards.
+  const SECTION_LIST = [
+    ['wc-fletch-fm', 'Woodcutting + Fletching + Firemaking'],
+    ['fish-cook',    'Fishing + Cooking'],
+    ['thieving',     'Thieving'],
+    ['mine-smith',   'Mining + Smithing'],
+  ];
 
   // ---- OSRS XP table ----------------------------------------------------
   // Standard cumulative-XP table: XP_TABLE[L] = experience required to reach
@@ -247,20 +255,56 @@ window.TO = (function () {
     // from. (Key name kept for back-compat; it now holds a view, not just a
     // section. 'home' isn't a VALID_SECTION, so restore falls through to index.)
     try { localStorage.setItem(KEY_LAST_SECTION, id); } catch (e) {}
-    const menu = document.getElementById('section-select');
-    if (menu) menu.value = VALID_SECTIONS.has(id) ? id : 'home';
+    markSectionActive(id);
+    closeSectionMenus();
   }
 
-  // Topbar dropdown: the single nav control. Sections jump straight in without
-  // bouncing through the index; "All tools" returns home. Setting the hash
-  // fires hashchange -> navigate(), the same path as a typed URL or
-  // back/forward, so the dropdown stays in sync via navigate().
+  // Section switcher lives in each section's big heading: the title text is a
+  // button that drops a menu of the other tools (plus "All tools" for home).
+  // Menu links are plain #/ anchors, so navigation rides the existing
+  // hashchange -> navigate() path; this wiring only handles open/close and the
+  // active marker. Hooks are module-level so navigate() can reach them.
+  let closeSectionMenus = () => {};
+  let markSectionActive = () => {};
+
   function wireSectionMenu() {
-    const sel = document.getElementById('section-select');
-    if (!sel) return;
-    sel.addEventListener('change', () => {
-      window.location.hash = VALID_SECTIONS.has(sel.value) ? '#/' + sel.value : '#/';
+    const switches = [...document.querySelectorAll('.view-title-switch')];
+    if (!switches.length) return;
+    const menus = [];
+
+    let items = '<a role="menuitem" href="#/" data-id="home">← All tools</a>';
+    for (const [id, label] of SECTION_LIST) {
+      items += `<a role="menuitem" href="#/${id}" data-id="${id}">${label}</a>`;
+    }
+
+    switches.forEach(btn => {
+      const menu = document.createElement('div');
+      menu.className = 'view-title-menu';
+      menu.setAttribute('role', 'menu');
+      menu.hidden = true;
+      menu.innerHTML = items;
+      btn.insertAdjacentElement('afterend', menu);
+      menus.push(menu);
+      btn.addEventListener('click', e => {
+        e.stopPropagation();           // don't let the document handler close it
+        const wasOpen = !menu.hidden;
+        closeSectionMenus();
+        if (!wasOpen) { menu.hidden = false; btn.setAttribute('aria-expanded', 'true'); }
+      });
     });
+
+    closeSectionMenus = () => {
+      menus.forEach(m => { m.hidden = true; });
+      switches.forEach(b => b.setAttribute('aria-expanded', 'false'));
+    };
+    markSectionActive = (id) => {
+      menus.forEach(m => m.querySelectorAll('a').forEach(a => {
+        a.toggleAttribute('aria-current', a.dataset.id === id);
+      }));
+    };
+
+    document.addEventListener('click', closeSectionMenus);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSectionMenus(); });
   }
 
   function setVisibleView(id) {
