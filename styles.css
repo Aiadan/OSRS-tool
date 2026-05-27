@@ -838,18 +838,6 @@ input[type="checkbox"] {
   font-size: 0.84rem;
 }
 
-/* ---- Thieving activity toggle (Pickpocketing / Stalls) ------------- */
-.th-activity {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
-}
-.th-activity .mode-rail-btn {
-  font-size: 0.9rem;
-  padding: 0.5rem 1.1rem;
-}
-
 /* The rail is now in normal flow (sticky inside .view-flex), so no body
    padding shenanigans are needed — the layout naturally reserves space
    for it. */
@@ -874,7 +862,25 @@ input[type="checkbox"] {
    reflows monotonically. The clickable column headers sort by the same metrics
    once the rail is gone. */
 @media (max-width: 1150px) {
-  .mode-rail { display: none; }
+  .mode-rail:not(.mode-rail--activity) { display: none; }
+
+  /* The activity rail switches the active sub-activity, so unlike the Tracking
+     rail it must stay reachable at every width. Instead of hiding, it reflows
+     from the vertical side-rail to a horizontal tab strip at the top of the
+     body — .view-flex--activity stacks rail-over-body so the body keeps the
+     full content width (and the rec grid reflows monotonically, since a side
+     column no longer competes for horizontal space below this width). */
+  .view-flex--activity { flex-direction: column; align-items: stretch; }
+  .mode-rail--activity {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+    min-width: 0;
+    margin-bottom: 1rem;
+  }
+  .mode-rail--activity .mode-rail-label { display: none; }
+  .mode-rail--activity .mode-rail-btn { text-align: center; }
 }
 
 /* Safeguard: below this width the input grid wraps to several rows, so the

@@ -159,7 +159,7 @@
   }
 
   function syncActivityButtons() {
-    document.querySelectorAll('.th-activity .mode-rail-btn').forEach(btn =>
+    document.querySelectorAll('section[data-view="thieving"] .mode-rail-btn').forEach(btn =>
       btn.classList.toggle('active', btn.dataset.thMode === mode));
   }
 
@@ -428,7 +428,7 @@
       el.addEventListener('input', render);
       el.addEventListener('change', render);
     });
-    document.querySelectorAll('.th-activity .mode-rail-btn').forEach(btn => {
+    document.querySelectorAll('section[data-view="thieving"] .mode-rail-btn').forEach(btn => {
       btn.addEventListener('click', () => switchMode(btn.dataset.thMode));
     });
 

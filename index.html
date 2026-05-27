@@ -298,13 +298,13 @@
       <h2 class="view-title">Thieving
         <button type="button" class="info-btn" aria-expanded="false" aria-controls="info-thieving" aria-label="How this data is calculated">i</button>
       </h2>
-      <div class="view-flex">
-      <div class="view-body">
-
-      <div class="th-activity" role="tablist">
+      <div class="view-flex view-flex--activity">
+      <aside class="mode-rail mode-rail--activity" role="tablist">
+        <div class="mode-rail-label">Activity</div>
         <button type="button" class="mode-rail-btn active" data-th-mode="pickpocket">Pickpocketing</button>
         <button type="button" class="mode-rail-btn" data-th-mode="stalls">Stalls</button>
-      </div>
+      </aside>
+      <div class="view-body">
 
       <section class="inputs card">
         <div class="input-row">
@@ -388,8 +388,8 @@
       <h2 class="view-title">Mining + Smithing
         <button type="button" class="info-btn" aria-expanded="false" aria-controls="info-mine-smith" aria-label="How this data is calculated">i</button>
       </h2>
-      <div class="view-flex">
-      <aside class="mode-rail">
+      <div class="view-flex view-flex--activity">
+      <aside class="mode-rail mode-rail--activity">
         <div class="mode-rail-label">Activity</div>
         <button type="button" class="activity-btn mode-rail-btn" data-activity="mining">Mining</button>
         <button type="button" class="activity-btn mode-rail-btn" data-activity="smithing">Smithing</button>
