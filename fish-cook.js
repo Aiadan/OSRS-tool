@@ -701,7 +701,7 @@
       titleParts.push(isExcluded ? 'Click to include this spot again.' : 'Click to exclude this spot from best-for picks.');
       tr.title = titleParts.join(' — ');
       const catchKey = cells.catchKey;
-      const pAny = isFinite(cells.catchTimeSec) ? TICK_S / cells.catchTimeSec : 0;
+      const pAny = isFinite(cells.catchTimeSec) ? TICK_S / cells.catchTimeSec : null;
       const fishFull = TO.fullSuccessLevel(L => anyCatchChance(row.spot, L, catchKey), row.spot.minFishLevel);
       const cap99 = anyCatchChance(row.spot, 99, catchKey);
       const catchNote = TO.actionNote({
