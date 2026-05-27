@@ -45,9 +45,10 @@
     const cycleSec = PICK.attemptSec + (1 - p) * PICK.stunSec;
     return {
       eligible,
-      successPct:  eligible ? p : 0,
-      xpPerAction: eligible ? p * t.xp : 0,
-      xpPerHour:   eligible ? (p * t.xp / cycleSec) * 3600 * efficiency : 0
+      successPct:   eligible ? p : 0,
+      secPerAction: eligible && p > 0 ? cycleSec / p : Infinity,
+      xpPerAction:  eligible ? p * t.xp : 0,
+      xpPerHour:    eligible ? (p * t.xp / cycleSec) * 3600 * efficiency : 0
     };
   }
 
@@ -114,22 +115,37 @@
       : v;
   }
 
-  const COLUMNS = {
-    pickpocket: [
-      { key: 'name',        label: 'Target' },
-      { key: 'level',       label: 'Lvl',         numeric: true, cell: (r, d) => r.item.level },
-      { key: 'successPct',  label: 'Success',     numeric: true, cell: (r, d) => TO.fmtPct(d.successPct) },
-      { key: 'xpPerAction', label: 'XP / action', numeric: true, cell: (r, d) => TO.fmt(d.xpPerAction, { decimals: 1 }) },
-      { key: 'xpPerHour',   label: 'XP / h',      numeric: true, cell: (r, d) => xpHourCell(r, d) }
-    ],
-    stalls: [
+  function columnsFor(activity, dm, mult, level) {
+    if (activity === 'pickpocket') {
+      return [
+        { key: 'name',        label: 'Target' },
+        { key: 'level',       label: 'Lvl',         numeric: true, cell: (r, d) => r.item.level },
+        { key: 'successPct',  label: dm === 'seconds' ? 'Time / steal' : 'Success', numeric: true,
+          cell: (r, d) => {
+            const full = TO.fullSuccessLevel(L => interp(r.item.success.low * mult, r.item.success.high * mult, L), r.item.level);
+            const cap99 = interp(r.item.success.low * mult, r.item.success.high * mult, 99);
+            const note = TO.actionNote({
+              levelAtFull: full,
+              floorSeconds: PICK.attemptSec,
+              capChance: cap99,
+              capSeconds: PICK.attemptSec / cap99,
+              currentLevel: level
+            });
+            return `${TO.fmtActionRate(d.successPct, d.secPerAction)}${note ? `<span class="success-note">${note}</span>` : ''}`;
+          } },
+        { key: 'xpPerAction', label: 'XP / action', numeric: true, cell: (r, d) => TO.fmt(d.xpPerAction, { decimals: 1 }) },
+        { key: 'xpPerHour',   label: 'XP / h',      numeric: true, cell: (r, d) => xpHourCell(r, d) }
+      ];
+    }
+    return [
       { key: 'name',      label: 'Stall' },
-      { key: 'level',     label: 'Lvl',       numeric: true, cell: (r, d) => r.item.level },
+      { key: 'level',     label: 'Lvl',        numeric: true, cell: (r, d) => r.item.level },
       { key: 'xpEach',    label: 'XP / steal', numeric: true, cell: (r, d) => TO.fmt(r.item.xp, { decimals: 1 }) },
-      { key: 'respawn',   label: 'Respawn',   numeric: true, cell: (r, d) => r.item.respawn + 's' },
-      { key: 'xpPerHour', label: 'XP / h',    numeric: true, cell: (r, d) => xpHourCell(r, d) }
-    ]
-  };
+      { key: 'respawn',   label: dm === 'seconds' ? 'Time / steal' : 'Success', numeric: true,
+        cell: (r, d) => dm === 'seconds' ? r.item.respawn + 's' : '100%' },
+      { key: 'xpPerHour', label: 'XP / h',     numeric: true, cell: (r, d) => xpHourCell(r, d) }
+    ];
+  }
 
   // ---- State + DOM -----------------------------------------------------
 
@@ -179,7 +195,7 @@
     nameEl.textContent = it.name;
     xpEl.textContent   = `${TO.fmt(r.xpPerHour)} XP/h`;
     detailEl.textContent = forMode === 'pickpocket'
-      ? `${TO.fmtPct(r.successPct)} success at Thieving ${inputs.level} · ${TO.fmt(it.xp, { decimals: 1 })} XP each`
+      ? `${TO.getDisplayMode() === 'seconds' ? `${TO.fmtTime(r.secPerAction)}/steal` : `${TO.fmtPct(r.successPct)} success`} at Thieving ${inputs.level} · ${TO.fmt(it.xp, { decimals: 1 })} XP each`
       : `${TO.fmt(it.xp, { decimals: 1 })} XP/steal · ${it.respawn}s respawn`;
   }
 
@@ -234,8 +250,8 @@
 
   // ---- Table -----------------------------------------------------------
 
-  function renderTable(rows) {
-    const cols = COLUMNS[mode];
+  function renderTable(rows, inputs) {
+    const cols = columnsFor(mode, TO.getDisplayMode(), gearMult(inputs.gear), inputs.level);
     document.getElementById('th-results-tbody').innerHTML = '';
     if (!rows.length) return;
     if (!(sortKey in rows[0].sortFields)) sortKey = 'xpPerHour';
@@ -391,7 +407,7 @@
     saveState(inputs);
     syncActivityButtons();
     renderRec(inputs);
-    renderTable(buildRows(mode, inputs));
+    renderTable(buildRows(mode, inputs), inputs);
     updateCharts(inputs);
     setTitles();
     if (TO.syncStickyThead) TO.syncStickyThead();
