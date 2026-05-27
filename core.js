@@ -247,20 +247,19 @@ window.TO = (function () {
     // from. (Key name kept for back-compat; it now holds a view, not just a
     // section. 'home' isn't a VALID_SECTION, so restore falls through to index.)
     try { localStorage.setItem(KEY_LAST_SECTION, id); } catch (e) {}
-    const homeLink = document.getElementById('home-link');
-    if (homeLink) homeLink.style.visibility = (id === 'home') ? 'hidden' : 'visible';
     const menu = document.getElementById('section-select');
-    if (menu) menu.value = VALID_SECTIONS.has(id) ? id : '';
+    if (menu) menu.value = VALID_SECTIONS.has(id) ? id : 'home';
   }
 
-  // Topbar dropdown: jump straight to a section without bouncing through the
-  // index. Setting the hash fires hashchange -> navigate(), so the selection
-  // takes the same path as a typed URL or back/forward.
+  // Topbar dropdown: the single nav control. Sections jump straight in without
+  // bouncing through the index; "All tools" returns home. Setting the hash
+  // fires hashchange -> navigate(), the same path as a typed URL or
+  // back/forward, so the dropdown stays in sync via navigate().
   function wireSectionMenu() {
     const sel = document.getElementById('section-select');
     if (!sel) return;
     sel.addEventListener('change', () => {
-      if (VALID_SECTIONS.has(sel.value)) window.location.hash = '#/' + sel.value;
+      window.location.hash = VALID_SECTIONS.has(sel.value) ? '#/' + sel.value : '#/';
     });
   }
 
@@ -289,9 +288,9 @@ window.TO = (function () {
     try { last = localStorage.getItem(KEY_LAST_SECTION); } catch (e) {}
     if (last && VALID_SECTIONS.has(last)) {
       // Reflect the restored section in the URL. Otherwise the hash stays at
-      // #/ while a section is shown, and the "All training tools" link
-      // (href="#/") becomes a no-op — clicking it doesn't change the hash, so
-      // no hashchange fires and the home view never loads.
+      // #/ while a section is shown, and picking "All tools" in the dropdown
+      // (which sets the hash to #/) becomes a no-op — the hash doesn't change,
+      // so no hashchange fires and the home view never loads.
       try { history.replaceState(null, '', '#/' + last); } catch (e) {}
       return navigate(last);
     }

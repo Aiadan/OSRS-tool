@@ -624,21 +624,44 @@ code {
   flex-wrap: wrap;
 }
 
-.home-link {
-  color: var(--accent);
-  text-decoration: none;
-  font-size: 0.85rem;
-  letter-spacing: 0.3px;
-}
-.home-link:hover { text-decoration: underline; }
-
-/* Topbar section switcher — inherits the global select colours; trimmed to
-   sit alongside the title rather than the taller input-row selects. */
+/* Topbar section switcher — the single nav control. Themed as a gold "pill"
+   so it reads as part of the masthead rather than a system form field:
+   transparent fill, gold edge + text, custom chevron. Overrides the global
+   `select` box styling. */
 .section-select {
   align-self: center;
-  padding: 0.3rem 0.5rem;
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%23f4b53f' stroke-width='1.6' d='M1 1.5 6 6.5l5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+  background-size: 0.7rem;
+  border: 1px solid var(--gold-edge);
+  border-radius: 5px;
+  color: var(--accent);
+  font-family: var(--font-body);
   font-size: 0.85rem;
-  max-width: 16rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  padding: 0.34rem 1.7rem 0.34rem 0.7rem;
+  max-width: 18rem;
+  cursor: pointer;
+  transition: border-color 140ms, background-color 140ms, box-shadow 140ms;
+}
+.section-select:hover {
+  border-color: var(--accent);
+  background-color: rgba(244, 181, 63, 0.08);
+}
+.section-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(244, 181, 63, 0.15);
+}
+/* The open list is OS-drawn; keep its rows legible against the dark theme. */
+.section-select option {
+  background: var(--bg-card-alt);
+  color: var(--text);
 }
 
 /* ---- Views (switched by hash router) ------------------------------- */
