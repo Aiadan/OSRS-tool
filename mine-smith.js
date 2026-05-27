@@ -34,6 +34,20 @@
     return Math.max(0, Math.min(1, value / 256));
   }
 
+  // Secondary line under the success %: the level a rock first hits 100% success
+  // (only rocks with high >= 255 ever do), or its ceiling at 99 if it never does.
+  // Returns '' when there's nothing to add — the player is already at/past the
+  // 100% level, or sitting at 99 where the cell already shows the ceiling.
+  function successNote(rock, miningLevel) {
+    for (let L = Math.max(1, rock.gatherLevel); L <= 99; L++) {
+      if (interp(rock.low, rock.high, L) >= 1) {
+        return miningLevel >= L ? '' : `100% at ${L}`;
+      }
+    }
+    if (miningLevel >= 99) return '';
+    return `max ${TO.fmtPct(interp(rock.low, rock.high, 99))} @99`;
+  }
+
   // Highest pickaxe the player can actually wield at miningLevel, capped by the
   // selected tier (mirror fish-cook's harpoon fallback).
   function effectivePick(pickId, miningLevel) {
@@ -349,10 +363,11 @@
       const def = rollLimitedCount(row.rock, Math.max(inputs.miningLevel, row.rock.gatherLevel), pick);
       const cv = (rockCounts[row.rock.id] != null && rockCounts[row.rock.id] > 0) ? rockCounts[row.rock.id] : '';
       const xpCell = `${TO.fmt(cells.miningXpPerHour)}${row.projection ? ` <span class="ot-dim">(@${row.projection.miningLevel})</span>` : ''}`;
+      const note = successNote(row.rock, inputs.miningLevel);
       tr.innerHTML = `
         <td class="tree-name">${row.rock.name}</td>
         <td class="numeric">${row.rock.gatherLevel}</td>
-        <td class="numeric">${TO.fmtPct(cells.successChance)}</td>
+        <td class="numeric">${TO.fmtPct(cells.successChance)}${note ? `<span class="success-note">${note}</span>` : ''}</td>
         <td class="numeric"><input type="number" min="0" class="rock-count" data-rock="${row.rock.id}" value="${cv}" placeholder="${def}"></td>
         <td class="numeric">${TO.fmt(cells.oresPerHour)}</td>
         <td class="numeric">${xpCell}</td>`;

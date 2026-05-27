@@ -838,6 +838,16 @@ input[type="checkbox"] {
   font-size: 0.84rem;
 }
 
+/* Dim second line under a rock's success %: its 100%-success level, or the
+   ceiling it caps at if it never reaches 100%. */
+.success-note {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.68rem;
+  font-weight: normal;
+  color: var(--text-dim);
+}
+
 /* The rail is now in normal flow (sticky inside .view-flex), so no body
    padding shenanigans are needed — the layout naturally reserves space
    for it. */
