@@ -327,6 +327,13 @@
     const best = bestRockByKey(rows, (sortKey in ROCK_MODES) ? sortKey : 'miningXpPerHour');
     const sorted = rows.slice().sort((a, b) => {
       if (a.rates.eligible !== b.rates.eligible) return a.rates.eligible ? -1 : 1;
+      // Among still-locked rocks, an XP/h sort buries the next-to-unlock rock at
+      // the bottom (highest XP/h is usually the furthest away). Order the locked
+      // block by required Mining level instead, next-to-unlock first (ties by
+      // projected XP/h, high first).
+      if (!a.rates.eligible && !b.rates.eligible && sortKey === 'miningXpPerHour') {
+        return a.rock.gatherLevel - b.rock.gatherLevel || b.sortFields.miningXpPerHour - a.sortFields.miningXpPerHour;
+      }
       const c = TO.compareBy(a, b, sortKey);
       return sortDir === 'asc' ? c : -c;
     });
@@ -373,6 +380,12 @@
     const best = bestBarByKey(rows, (sortKey in BAR_MODES) ? sortKey : 'totalXpPerHour');
     const sorted = rows.slice().sort((a, b) => {
       if (a.rates.eligible !== b.rates.eligible) return a.rates.eligible ? -1 : 1;
+      // As with rocks, order the still-locked block by required Smithing level
+      // (next-to-unlock first) rather than by an XP/h metric that floats the
+      // furthest-away bar to the top. Ties broken by projected XP/h, high first.
+      if (!a.rates.eligible && !b.rates.eligible && (sortKey === 'totalXpPerHour' || sortKey === 'smithingXpPerHour')) {
+        return a.bar.smithLevel - b.bar.smithLevel || b.sortFields[sortKey] - a.sortFields[sortKey];
+      }
       const c = TO.compareBy(a, b, sortKey);
       return sortDir === 'asc' ? c : -c;
     });
