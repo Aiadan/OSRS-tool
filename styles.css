@@ -926,3 +926,34 @@ input[type="checkbox"] {
   .top-toolbar { position: static; margin-top: 0; padding-top: 0; margin-bottom: 1.25rem; }
   .view-title { border-bottom: none; padding: 0; margin: 0 0 1.25rem 0 !important; }
 }
+
+/* ---- Display-mode toggle (success % vs avg seconds) ---------------- */
+.display-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.display-mode-toggle .dm-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+}
+.dm-btn {
+  background: var(--bg-card-alt);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.25rem 0.55rem;
+  font-family: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: border-color 120ms, background 120ms, color 120ms;
+}
+.dm-btn:hover { border-color: var(--accent); }
+.dm-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #1f1f1f;
+  font-weight: 600;
+}

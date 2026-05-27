@@ -368,6 +368,13 @@ window.TO = (function () {
     updateSyncIndicators();   // reflect any stored state on load
   }
 
+  function wireDisplayModeToggle() {
+    document.querySelectorAll('.display-mode-toggle [data-mode]').forEach(btn => {
+      btn.addEventListener('click', () => setDisplayMode(btn.dataset.mode));
+    });
+    syncDisplayModeToggle();   // reflect persisted mode on load
+  }
+
   function wireHiscores() {
     const input  = document.getElementById('rsn-input');
     const btn    = document.getElementById('rsn-btn');
@@ -622,6 +629,7 @@ window.TO = (function () {
     wireVersion();
     wireInfoToggles();
     wireHiscores();
+    wireDisplayModeToggle();
     wireStickyTheadRelease();
 
     // Each section module attaches its own listeners and renders once. Both

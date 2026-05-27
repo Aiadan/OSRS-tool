@@ -20,6 +20,11 @@
         <span id="app-version" class="app-version"></span>
       </div>
       <div class="top-toolbar-right">
+        <div class="display-mode-toggle" role="group" aria-label="Rate display mode">
+          <span class="dm-label">Rates</span>
+          <button type="button" class="dm-btn active" data-mode="percent" aria-pressed="true">%</button>
+          <button type="button" class="dm-btn" data-mode="seconds" aria-pressed="false">sec</button>
+        </div>
         <label class="inline">
           <span>RSN</span>
           <input type="text" id="rsn-input" placeholder="your in-game name" autocomplete="off" spellcheck="false" />
